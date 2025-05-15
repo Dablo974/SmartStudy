@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from 'react-hook-form';
@@ -5,11 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { UploadCloud } from 'lucide-react';
+import type { MCQ } from '@/lib/types'; // Import the MCQ type
 
 const formSchema = z.object({
   csvFile: typeof window === 'undefined' 
@@ -20,6 +21,8 @@ const formSchema = z.object({
 });
 
 type McqUploadFormValues = z.infer<typeof formSchema>;
+
+const LOCAL_STORAGE_MCQS_KEY = 'smartStudyProAllMcqs'; // Must match study/page.tsx
 
 export function McqUploadForm() {
   const { toast } = useToast();
@@ -32,19 +35,120 @@ export function McqUploadForm() {
 
   function onSubmit(data: McqUploadFormValues) {
     const file = data.csvFile[0];
-    // Mock processing: In a real app, you'd parse the CSV and send it to the backend.
-    console.log('Uploaded file:', file.name, file.type, file.size);
+    if (!file) return;
 
-    toast({
-      title: 'File Upload Successful',
-      description: `"${file.name}" has been queued for processing.`,
-    });
-    form.reset();
-     // Reset the file input visually if possible (browser security might prevent direct manipulation)
-    const fileInput = document.getElementById('csvFile-input') as HTMLInputElement | null;
-    if (fileInput) {
-        fileInput.value = '';
-    }
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      try {
+        const csvText = event.target?.result as string;
+        if (!csvText) {
+          toast({ title: 'Error reading file', description: 'File content is empty.', variant: 'destructive' });
+          return;
+        }
+
+        const lines = csvText.split('\n').filter(line => line.trim() !== '');
+        const newMcqs: MCQ[] = [];
+        let skippedLines = 0;
+
+        // Skip header if present (simple check for common header keywords)
+        const headerKeywords = ['question', 'option', 'correctanswerindex', 'subject', 'explanation'];
+        let startIndex = 0;
+        if (lines.length > 0 && headerKeywords.some(kw => lines[0].toLowerCase().includes(kw))) {
+          startIndex = 1;
+        }
+
+        for (let i = startIndex; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+
+          // Basic CSV parsing: split by comma. Assumes commas are not within fields.
+          // For more complex CSVs (e.g., quoted fields with commas), a proper library would be better.
+          const values = line.split(',').map(v => v.trim());
+          
+          if (values.length < 6) { // question, 4 options, correctAnswerIndex are mandatory
+            console.warn(`Skipping malformed line ${i + 1}: Not enough values. Line: "${line}"`);
+            skippedLines++;
+            continue;
+          }
+
+          const [question, opt1, opt2, opt3, opt4, correctIdxStr, subject, explanation] = values;
+
+          const correctAnswerIndex = parseInt(correctIdxStr, 10);
+
+          if (isNaN(correctAnswerIndex) || correctAnswerIndex < 0 || correctAnswerIndex > 3) {
+            console.warn(`Skipping line ${i + 1} due to invalid correctAnswerIndex: "${correctIdxStr}". Line: "${line}"`);
+            skippedLines++;
+            continue;
+          }
+          if (!question || !opt1 || !opt2 || !opt3 || !opt4) {
+            console.warn(`Skipping line ${i + 1} due to missing question or options. Line: "${line}"`);
+            skippedLines++;
+            continue;
+          }
+
+          const mcqToAdd: MCQ = {
+            id: `mcq-${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${i}`, // More robust unique ID
+            question: question,
+            options: [opt1, opt2, opt3, opt4],
+            correctAnswerIndex: correctAnswerIndex,
+            subject: subject || undefined,
+            explanation: explanation || undefined,
+            nextReviewSession: 1, // Make new questions due early
+            intervalIndex: 0,
+            lastReviewedSession: undefined,
+          };
+          newMcqs.push(mcqToAdd);
+        }
+
+        let existingMcqs: MCQ[] = [];
+        try {
+          const storedMcqs = localStorage.getItem(LOCAL_STORAGE_MCQS_KEY);
+          if (storedMcqs) {
+            const parsed = JSON.parse(storedMcqs);
+            if (Array.isArray(parsed)) {
+              existingMcqs = parsed;
+            } else {
+               console.warn("Stored MCQs were not an array. Initializing as empty.");
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse existing MCQs from localStorage. Old data might be lost if overwritten.", e);
+          // Decide if we want to proceed or stop. For now, we'll overwrite with new if parse fails or start empty.
+          existingMcqs = []; 
+        }
+        
+        // Filter out any potential duplicates by ID before merging - naive check
+        const existingIds = new Set(existingMcqs.map(mcq => mcq.id));
+        const uniqueNewMcqs = newMcqs.filter(mcq => !existingIds.has(mcq.id));
+
+        const updatedMcqs = [...existingMcqs, ...uniqueNewMcqs];
+        localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(updatedMcqs));
+
+        toast({
+          title: 'Upload Processed',
+          description: `${uniqueNewMcqs.length} new question(s) added. ${skippedLines} line(s) skipped.`,
+        });
+
+      } catch (error) {
+        console.error("Error processing CSV file:", error);
+        toast({ title: 'Error Processing File', description: 'An unexpected error occurred. Check console for details.', variant: 'destructive' });
+      } finally {
+        form.reset();
+        // Attempt to clear the file input visually (browser security might limit this)
+        const fileInput = document.getElementById('csvFile-input') as HTMLInputElement | null;
+        if (fileInput) {
+            fileInput.value = '';
+        } // Missing closing brace was here
+      }
+    };
+
+    reader.onerror = () => {
+      toast({ title: 'Error Reading File', description: 'Could not read the selected file.', variant: 'destructive' });
+      form.reset();
+    };
+
+    reader.readAsText(file);
   }
 
   return (
@@ -69,10 +173,15 @@ export function McqUploadForm() {
                   <FormLabel htmlFor="csvFile-input">CSV File</FormLabel>
                   <FormControl>
                      <Input 
-                        id="csvFile-input"
+                        id="csvFile-input" // Added id here
                         type="file" 
                         accept=".csv"
                         className="cursor-pointer file:text-accent file:font-semibold hover:file:bg-accent/10"
+                        // Use 'ref' from field for react-hook-form to control the file input,
+                        // but onChange needs to pass e.target.files to field.onChange
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        name={field.name}
                         onChange={(e) => field.onChange(e.target.files)}
                       />
                   </FormControl>
@@ -90,13 +199,13 @@ export function McqUploadForm() {
                 <code>Capital of Japan?,Beijing,Seoul,Tokyo,Bangkok,2,Geography,Tokyo is the capital.</code>
               </pre>
               <p className="text-xs text-muted-foreground mt-1">
-                Ensure one question per line. `correctAnswerIndex` is 0-based. `subject` and `explanation` are optional.
+                Ensure one question per line. `correctAnswerIndex` is 0-based. `subject` and `explanation` are optional and can be empty (e.g., `...,,,explanation text`).
               </p>
             </div>
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Uploading..." : "Upload File"}
+              {form.formState.isSubmitting ? 'Processing...' : 'Upload and Add Questions'}
             </Button>
           </CardFooter>
         </form>
