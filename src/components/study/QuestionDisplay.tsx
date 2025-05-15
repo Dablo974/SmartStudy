@@ -59,8 +59,8 @@ export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, tota
           className="space-y-3"
         >
           {question.options.map((option, index) => {
-            constisSelected = selectedOption === option;
-            constisCorrectOption = index === question.correctAnswerIndex;
+            const isSelected = selectedOption === option;
+            const isCorrectOption = index === question.correctAnswerIndex;
             let optionClass = "border-input hover:border-accent";
             if (isSubmitted) {
               if (isCorrectOption) {
