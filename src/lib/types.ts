@@ -1,3 +1,4 @@
+
 export interface MCQ {
   id: string;
   question: string;
@@ -5,6 +6,10 @@ export interface MCQ {
   correctAnswerIndex: number;
   explanation?: string;
   subject?: string; // Optional: to categorize questions
+  // New fields for spaced repetition
+  dueDate: string; // ISO date string, when the question is next due
+  intervalIndex: number; // Index in the repetition interval sequence (e.g., 0 for 1 day, 1 for 2 days, etc.)
+  lastReviewedDate?: string; // ISO date string, when the question was last reviewed
 }
 
 export interface UserProgress {
