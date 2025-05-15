@@ -84,18 +84,17 @@ export default function StudySessionPage() {
           }));
         } else {
           console.warn("MCQ sets in localStorage were not an array. Resetting to empty.");
-          mcqSetsToUse = []; // Start with an empty array of sets if data is corrupted
+          mcqSetsToUse = []; 
           localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(mcqSetsToUse));
         }
       } catch (e) {
         console.error("Failed to parse MCQ sets from localStorage. Resetting to empty.", e);
-        mcqSetsToUse = []; // Start with an empty array of sets on error
+        mcqSetsToUse = [];
         localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(mcqSetsToUse));
       }
     }
     setAllMcqSets(mcqSetsToUse);
 
-    // Load session number
     let loadedSessionNumber: number | null = null;
     try {
       const storedSessionNum = localStorage.getItem(LOCAL_STORAGE_SESSION_KEY);
@@ -109,12 +108,11 @@ export default function StudySessionPage() {
     if (!loadedSessionNumber) {
       localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, '1');
     }
-    // setIsLoading will be handled by the subsequent effect
   }, []);
 
   // Effect to save allMcqSets to localStorage
   useEffect(() => {
-    if (allMcqSets !== null && !isLoading) { // Only save if not loading and sets are initialized
+    if (allMcqSets !== null && !isLoading) { 
       localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(allMcqSets));
     }
   }, [allMcqSets, isLoading]);
@@ -133,13 +131,14 @@ export default function StudySessionPage() {
       return;
     }
 
-    // Flatten MCQs from active sets
     const activeMcqs = allMcqSets
       .filter(set => set.isActive)
       .reduce((acc, set) => acc.concat(set.mcqs), [] as MCQ[]);
-    setAllMcqsFlat(activeMcqs);
+    setAllMcqsFlat(activeMcqs); // Keep allMcqsFlat updated
 
-    if (prevSessionNumberRef.current !== currentSessionNumber || allMcqsFlat.length > 0) { // Re-filter if session changes or mcqs load
+    // Only reset session state if the session number has actually changed.
+    // prevSessionNumberRef.current starts as null, so this is true for the initial load.
+    if (prevSessionNumberRef.current !== currentSessionNumber) {
       setIsLoading(true);
       const dueQuestions = activeMcqs
         .filter(q => q.nextReviewSession <= currentSessionNumber)
@@ -147,14 +146,15 @@ export default function StudySessionPage() {
 
       setSessionQuestions(dueQuestions);
       setInitialSessionQuestionCount(dueQuestions.length);
-      setCurrentQuestionIndex(0);
+      setCurrentQuestionIndex(0); // Reset index for the new session
       setScore(0);
       setShowResults(false);
       setIsAnswerSubmitted(false);
-      prevSessionNumberRef.current = currentSessionNumber;
+      prevSessionNumberRef.current = currentSessionNumber; // Update the ref to the new current session number
       setIsLoading(false);
-    } else if (isLoading) { // Handles initial load where session might not change but data becomes available
-        setIsLoading(false);
+    } else if (isLoading) {
+      // If isLoading was true for other reasons (e.g., initial allMcqSets load) but session didn't change, turn it off.
+      setIsLoading(false);
     }
   }, [allMcqSets, currentSessionNumber, isLoading]);
 
@@ -166,9 +166,8 @@ export default function StudySessionPage() {
 
     setAllMcqSets(prevSets => 
       (prevSets || []).map(set => {
-        // Find the MCQ in its set and update it
         const mcqIndex = set.mcqs.findIndex(mcq => mcq.id === currentQuestionId);
-        if (mcqIndex === -1) return set; // Not in this set
+        if (mcqIndex === -1) return set;
 
         const q = set.mcqs[mcqIndex];
         let newIntervalIndex = q.intervalIndex;
@@ -233,8 +232,8 @@ export default function StudySessionPage() {
 
   const restartSession = () => {
      if (allMcqsFlat === null || currentSessionNumber === null) return;
-    setIsLoading(true);
-     const dueQuestions = allMcqsFlat
+    setIsLoading(true); // Set loading true before re-filtering
+     const dueQuestions = allMcqsFlat // Use allMcqsFlat which should be up-to-date
       .filter(q => q.nextReviewSession <= currentSessionNumber)
       .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
     setSessionQuestions(dueQuestions);
@@ -243,19 +242,19 @@ export default function StudySessionPage() {
     setScore(0);
     setShowResults(false);
     setIsAnswerSubmitted(false);
-    setIsLoading(false);
+    setIsLoading(false); // Set loading false after setup
   };
 
   const handleStartNextSession = () => {
+    // prevSessionNumberRef will be updated by the useEffect when currentSessionNumber changes
     setCurrentSessionNumber(prev => (prev ? prev + 1 : 1)); 
-    // The useEffect for currentSessionNumber change will handle resetting the session state
   };
 
 
   if (isLoading || allMcqSets === null || currentSessionNumber === null) {
     return (
       <AppLayout pageTitle="Study Session">
-        <div className="flex flex-col items-center justify-center h-full text-center">
+        <div className="flex flex-col items-center justify-center h-full text-center animate-in fade-in duration-300">
           <Zap className="w-16 h-16 text-accent mb-4 animate-pulse" />
           <h2 className="text-2xl font-semibold mb-2">Loading Questions...</h2>
           <p className="text-muted-foreground">
@@ -365,3 +364,4 @@ export default function StudySessionPage() {
     </AppLayout>
   );
 }
+
