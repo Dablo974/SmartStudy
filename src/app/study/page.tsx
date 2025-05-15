@@ -12,17 +12,10 @@ import { CheckCircle, XCircle, Zap, CalendarCheck2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
-const REVIEW_INTERVALS_DAYS = [1, 2, 4, 6, 8]; // Spaced repetition intervals in days
-
-// Helper function to add days to a date
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
+const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; // Spaced repetition intervals in sessions
 
 // Initial set of MCQs (mock data)
-const initialMcqsFromMock: Omit<MCQ, 'dueDate' | 'intervalIndex' | 'lastReviewedDate'>[] = [
+const initialMcqsFromMock: Omit<MCQ, 'nextReviewSession' | 'intervalIndex' | 'lastReviewedSession'>[] = [
   { id: '1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswerIndex: 2, subject: 'Geography', explanation: 'Paris is the capital and most populous city of France.' },
   { id: '2', question: 'Which planet is known as the Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Saturn'], correctAnswerIndex: 1, subject: 'Astronomy', explanation: 'Mars is often called the Red Planet because of its reddish appearance.' },
   { id: '3', question: 'What is the chemical symbol for water?', options: ['O2', 'H2O', 'CO2', 'NaCl'], correctAnswerIndex: 1, subject: 'Chemistry', explanation: 'H2O represents two hydrogen atoms and one oxygen atom.' },
@@ -40,29 +33,24 @@ export default function StudySessionPage() {
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [currentSessionNumber, setCurrentSessionNumber] = useState(1); // Represents the current session
 
   useEffect(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
-
-    // Initialize MCQs with SRS data. In a real app, this might come from localStorage or a backend.
+    // In a real app, currentSessionNumber and allMcqs might be loaded from localStorage or a backend.
     // For this prototype, we re-initialize from mock data on each load.
-    const initializedMcqs = initialMcqsFromMock.map((mcq, index) => ({
+    // currentSessionNumber starts at 1 each time the page loads.
+
+    const initializedMcqs = initialMcqsFromMock.map((mcq) => ({
       ...mcq,
-      // Make all questions due initially for the first session
-      dueDate: addDays(today, -1 * (initialMcqsFromMock.length - index)).toISOString(), // Stagger due dates slightly in the past
+      nextReviewSession: 1, // All questions due in the first session
       intervalIndex: 0, // Start at the first interval
-      lastReviewedDate: undefined,
+      lastReviewedSession: undefined,
     }));
     setAllMcqs(initializedMcqs);
 
     const dueQuestions = initializedMcqs
-      .filter(q => {
-        const dueDate = new Date(q.dueDate);
-        dueDate.setHours(0, 0, 0, 0);
-        return dueDate <= today;
-      })
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()); // Study older due questions first
+      .filter(q => q.nextReviewSession <= currentSessionNumber)
+      .sort((a, b) => a.nextReviewSession - b.nextReviewSession); // Study earlier session questions first
 
     setSessionQuestions(dueQuestions);
     setCurrentQuestionIndex(0);
@@ -70,7 +58,7 @@ export default function StudySessionPage() {
     setShowResults(false);
     setIsAnswerSubmitted(false);
     setIsLoading(false);
-  }, []);
+  }, []); // Runs on initial mount. If currentSessionNumber were persisted and changed, it could be a dependency.
 
   const handleAnswerSubmit = (isCorrect: boolean) => {
     const currentQuestionId = sessionQuestions[currentQuestionIndex].id;
@@ -94,26 +82,25 @@ export default function StudySessionPage() {
     setAllMcqs(prevAllMcqs => 
       prevAllMcqs.map(q => {
         if (q.id === currentQuestionId) {
-          const today = new Date();
           let newIntervalIndex = q.intervalIndex;
 
           if (isCorrect) {
             newIntervalIndex = q.intervalIndex + 1;
-            if (newIntervalIndex >= REVIEW_INTERVALS_DAYS.length) {
-              newIntervalIndex = REVIEW_INTERVALS_DAYS.length - 1; // Cap at max interval
+            if (newIntervalIndex >= REVIEW_INTERVALS_SESSIONS.length) {
+              newIntervalIndex = REVIEW_INTERVALS_SESSIONS.length - 1; // Cap at max interval
             }
           } else {
-            newIntervalIndex = 0; // Reset to the first interval
+            newIntervalIndex = 0; // Reset to the first interval (due in next session)
           }
           
-          const daysToAdd = REVIEW_INTERVALS_DAYS[newIntervalIndex];
-          const nextDueDate = addDays(today, daysToAdd);
+          const sessionsToWait = REVIEW_INTERVALS_SESSIONS[newIntervalIndex];
+          const nextSessionForReview = currentSessionNumber + sessionsToWait;
           
           return {
             ...q,
             intervalIndex: newIntervalIndex,
-            dueDate: nextDueDate.toISOString(),
-            lastReviewedDate: today.toISOString(),
+            nextReviewSession: nextSessionForReview,
+            lastReviewedSession: currentSessionNumber,
           };
         }
         return q;
@@ -128,12 +115,17 @@ export default function StudySessionPage() {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       setShowResults(true);
+      // If we wanted to advance the session count automatically after results, we could do it here.
+      // For example: setCurrentSessionNumber(prev => prev + 1);
+      // This would require currentSessionNumber to be in useEffect's dependency array to refetch questions.
     }
   };
 
   const restartSession = () => {
     // This restarts the current set of questions. 
-    // To get a new set based on updated due dates, user would navigate away and back.
+    // To get a new set based on updated SRS data for a "new" session, 
+    // user would navigate away and back, or we'd need to increment currentSessionNumber
+    // and re-trigger the useEffect.
     setCurrentQuestionIndex(0);
     setScore(0);
     setShowResults(false);
@@ -161,13 +153,13 @@ export default function StudySessionPage() {
            <Card className="w-full max-w-md shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl flex items-center justify-center gap-2">
-                <CalendarCheck2 className="w-8 h-8 text-green-500" />
+                <CalendarCheck2 className="w-8 h-8 text-green-500" /> {/* Icon might be less thematic now */}
                 All Caught Up!
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-lg text-muted-foreground">
-                There are no questions due for study right now. Great job staying on top of your reviews!
+                There are no questions due for study in this session. Great job staying on top of your reviews!
               </p>
               <Link href="/" passHref>
                 <Button className="w-full">
@@ -221,7 +213,7 @@ export default function StudySessionPage() {
   }
   
   return (
-    <AppLayout pageTitle="Study Session">
+    <AppLayout pageTitle={`Study Session ${currentSessionNumber}`}>
       <div className="flex flex-col items-center space-y-6">
         <Progress value={progressPercentage} className="w-full max-w-2xl" />
         {sessionQuestions.length > 0 && currentQuestionIndex < sessionQuestions.length && (
@@ -241,3 +233,4 @@ export default function StudySessionPage() {
     </AppLayout>
   );
 }
+
