@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { UploadCloud } from 'lucide-react';
-import type { MCQ } from '@/lib/types'; // Import the MCQ type
+import type { MCQ } from '@/lib/types'; 
 
 const formSchema = z.object({
   csvFile: typeof window === 'undefined' 
@@ -22,7 +22,7 @@ const formSchema = z.object({
 
 type McqUploadFormValues = z.infer<typeof formSchema>;
 
-const LOCAL_STORAGE_MCQS_KEY = 'smartStudyProAllMcqs'; // Must match study/page.tsx
+const LOCAL_STORAGE_MCQS_KEY = 'smartStudyProAllMcqs';
 
 export function McqUploadForm() {
   const { toast } = useToast();
@@ -51,7 +51,6 @@ export function McqUploadForm() {
         const newMcqs: MCQ[] = [];
         let skippedLines = 0;
 
-        // Skip header if present (simple check for common header keywords)
         const headerKeywords = ['question', 'option', 'correctanswerindex', 'subject', 'explanation'];
         let startIndex = 0;
         if (lines.length > 0 && headerKeywords.some(kw => lines[0].toLowerCase().includes(kw))) {
@@ -62,18 +61,15 @@ export function McqUploadForm() {
           const line = lines[i].trim();
           if (!line) continue;
 
-          // Basic CSV parsing: split by comma. Assumes commas are not within fields.
-          // For more complex CSVs (e.g., quoted fields with commas), a proper library would be better.
           const values = line.split(',').map(v => v.trim());
           
-          if (values.length < 6) { // question, 4 options, correctAnswerIndex are mandatory
+          if (values.length < 6) {
             console.warn(`Skipping malformed line ${i + 1}: Not enough values. Line: "${line}"`);
             skippedLines++;
             continue;
           }
 
           const [question, opt1, opt2, opt3, opt4, correctIdxStr, subject, explanation] = values;
-
           const correctAnswerIndex = parseInt(correctIdxStr, 10);
 
           if (isNaN(correctAnswerIndex) || correctAnswerIndex < 0 || correctAnswerIndex > 3) {
@@ -88,15 +84,17 @@ export function McqUploadForm() {
           }
 
           const mcqToAdd: MCQ = {
-            id: `mcq-${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${i}`, // More robust unique ID
+            id: `mcq-${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${i}`,
             question: question,
             options: [opt1, opt2, opt3, opt4],
             correctAnswerIndex: correctAnswerIndex,
             subject: subject || undefined,
             explanation: explanation || undefined,
-            nextReviewSession: 1, // Make new questions due early
+            nextReviewSession: 1, 
             intervalIndex: 0,
             lastReviewedSession: undefined,
+            timesCorrect: 0, // Initialize new field
+            timesIncorrect: 0, // Initialize new field
           };
           newMcqs.push(mcqToAdd);
         }
@@ -107,18 +105,20 @@ export function McqUploadForm() {
           if (storedMcqs) {
             const parsed = JSON.parse(storedMcqs);
             if (Array.isArray(parsed)) {
-              existingMcqs = parsed;
+              existingMcqs = parsed.map(mcq => ({ // Ensure existing MCQs also have new fields
+                ...mcq,
+                timesCorrect: mcq.timesCorrect || 0,
+                timesIncorrect: mcq.timesIncorrect || 0,
+              }));
             } else {
                console.warn("Stored MCQs were not an array. Initializing as empty.");
             }
           }
         } catch (e) {
           console.error("Failed to parse existing MCQs from localStorage. Old data might be lost if overwritten.", e);
-          // Decide if we want to proceed or stop. For now, we'll overwrite with new if parse fails or start empty.
           existingMcqs = []; 
         }
         
-        // Filter out any potential duplicates by ID before merging - naive check
         const existingIds = new Set(existingMcqs.map(mcq => mcq.id));
         const uniqueNewMcqs = newMcqs.filter(mcq => !existingIds.has(mcq.id));
 
@@ -135,11 +135,10 @@ export function McqUploadForm() {
         toast({ title: 'Error Processing File', description: 'An unexpected error occurred. Check console for details.', variant: 'destructive' });
       } finally {
         form.reset();
-        // Attempt to clear the file input visually (browser security might limit this)
         const fileInput = document.getElementById('csvFile-input') as HTMLInputElement | null;
         if (fileInput) {
             fileInput.value = '';
-        } // Missing closing brace was here
+        }
       }
     };
 
@@ -173,12 +172,10 @@ export function McqUploadForm() {
                   <FormLabel htmlFor="csvFile-input">CSV File</FormLabel>
                   <FormControl>
                      <Input 
-                        id="csvFile-input" // Added id here
+                        id="csvFile-input"
                         type="file" 
                         accept=".csv"
                         className="cursor-pointer file:text-accent file:font-semibold hover:file:bg-accent/10"
-                        // Use 'ref' from field for react-hook-form to control the file input,
-                        // but onChange needs to pass e.target.files to field.onChange
                         ref={field.ref}
                         onBlur={field.onBlur}
                         name={field.name}

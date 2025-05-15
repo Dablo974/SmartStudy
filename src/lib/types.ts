@@ -10,6 +10,9 @@ export interface MCQ {
   nextReviewSession: number; // Session number when the question is next due
   intervalIndex: number; // Index in the repetition interval sequence
   lastReviewedSession?: number; // Session number when the question was last reviewed
+  // New fields for tracking performance
+  timesCorrect: number;
+  timesIncorrect: number;
 }
 
 export interface UserProgress {
@@ -27,4 +30,3 @@ export interface DailyQuestionSet {
   date: string; // ISO date string
   questions: MCQ[];
 }
-

@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; // Spaced repetition intervals in sessions
 
 // Initial set of MCQs (mock data) - only used if localStorage is empty
-const initialMcqsFromMock: Omit<MCQ, 'nextReviewSession' | 'intervalIndex' | 'lastReviewedSession'>[] = [
+const initialMcqsFromMock: Omit<MCQ, 'nextReviewSession' | 'intervalIndex' | 'lastReviewedSession' | 'timesCorrect' | 'timesIncorrect'>[] = [
   { id: '1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswerIndex: 2, subject: 'Geography', explanation: 'Paris is the capital and most populous city of France.' },
   { id: '2', question: 'Which planet is known as the Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Saturn'], correctAnswerIndex: 1, subject: 'Astronomy', explanation: 'Mars is often called the Red Planet because of its reddish appearance.' },
   { id: '3', question: 'What is the chemical symbol for water?', options: ['O2', 'H2O', 'CO2', 'NaCl'], correctAnswerIndex: 1, subject: 'Chemistry', explanation: 'H2O represents two hydrogen atoms and one oxygen atom.' },
@@ -48,17 +48,27 @@ export default function StudySessionPage() {
       const storedMcqs = localStorage.getItem(LOCAL_STORAGE_MCQS_KEY);
       if (storedMcqs) {
         loadedMcqs = JSON.parse(storedMcqs);
+        // Ensure new fields exist
+        if (Array.isArray(loadedMcqs)) {
+          loadedMcqs = loadedMcqs.map(mcq => ({
+            ...mcq,
+            timesCorrect: mcq.timesCorrect || 0,
+            timesIncorrect: mcq.timesIncorrect || 0,
+          }));
+        }
       }
     } catch (e) { console.error("Failed to parse MCQs from localStorage", e); }
 
     if (loadedMcqs && loadedMcqs.length > 0) {
       setAllMcqs(loadedMcqs);
     } else {
-      const initializedMcqs = initialMcqsFromMock.map((mcq) => ({
+      const initializedMcqs: MCQ[] = initialMcqsFromMock.map((mcq) => ({
         ...mcq,
         nextReviewSession: 1, // Due in the first session
         intervalIndex: 0,
         lastReviewedSession: undefined,
+        timesCorrect: 0,
+        timesIncorrect: 0,
       }));
       setAllMcqs(initializedMcqs);
       localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(initializedMcqs));
@@ -86,7 +96,7 @@ export default function StudySessionPage() {
 
   // Effect to save allMcqs to localStorage
   useEffect(() => {
-    if (allMcqs !== null && !isLoading) { 
+    if (allMcqs !== null && !isLoading) {
       localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(allMcqs));
     }
   }, [allMcqs, isLoading]);
@@ -105,7 +115,6 @@ export default function StudySessionPage() {
       return;
     }
 
-    // Only re-initialize the session if the session number has actually changed.
     if (prevSessionNumberRef.current !== currentSessionNumber) {
       setIsLoading(true); 
       const dueQuestions = allMcqs
@@ -121,8 +130,6 @@ export default function StudySessionPage() {
       prevSessionNumberRef.current = currentSessionNumber;
       setIsLoading(false);
     } else if (isLoading) {
-      // Catchall for initial load where allMcqs and currentSessionNumber are set but effect didn't run new session logic.
-      // This ensures isLoading is false if it was true from initial guards.
       setIsLoading(false);
     }
   }, [allMcqs, currentSessionNumber, isLoading]);
@@ -133,6 +140,40 @@ export default function StudySessionPage() {
     
     const currentQuestionId = sessionQuestions[currentQuestionIndex].id;
 
+    setAllMcqs(prevAllMcqs => 
+      (prevAllMcqs || []).map(q => {
+        if (q.id === currentQuestionId) {
+          let newIntervalIndex = q.intervalIndex;
+          let newTimesCorrect = q.timesCorrect;
+          let newTimesIncorrect = q.timesIncorrect;
+
+          if (isCorrect) {
+            newTimesCorrect++;
+            newIntervalIndex = q.intervalIndex + 1;
+            if (newIntervalIndex >= REVIEW_INTERVALS_SESSIONS.length) {
+              newIntervalIndex = REVIEW_INTERVALS_SESSIONS.length - 1;
+            }
+          } else {
+            newTimesIncorrect++;
+            newIntervalIndex = 0; 
+          }
+          
+          const sessionsToWait = REVIEW_INTERVALS_SESSIONS[newIntervalIndex];
+          const nextSessionForReview = currentSessionNumber + sessionsToWait;
+          
+          return {
+            ...q,
+            intervalIndex: newIntervalIndex,
+            nextReviewSession: nextSessionForReview,
+            lastReviewedSession: currentSessionNumber,
+            timesCorrect: newTimesCorrect,
+            timesIncorrect: newTimesIncorrect,
+          };
+        }
+        return q;
+      })
+    );
+    
     if (isCorrect) {
       setScore(prev => prev + 1);
       toast({
@@ -148,34 +189,6 @@ export default function StudySessionPage() {
         variant: "destructive",
       });
     }
-    
-    setAllMcqs(prevAllMcqs => 
-      (prevAllMcqs || []).map(q => {
-        if (q.id === currentQuestionId) {
-          let newIntervalIndex = q.intervalIndex;
-
-          if (isCorrect) {
-            newIntervalIndex = q.intervalIndex + 1;
-            if (newIntervalIndex >= REVIEW_INTERVALS_SESSIONS.length) {
-              newIntervalIndex = REVIEW_INTERVALS_SESSIONS.length - 1;
-            }
-          } else {
-            newIntervalIndex = 0; 
-          }
-          
-          const sessionsToWait = REVIEW_INTERVALS_SESSIONS[newIntervalIndex];
-          const nextSessionForReview = currentSessionNumber + sessionsToWait;
-          
-          return {
-            ...q,
-            intervalIndex: newIntervalIndex,
-            nextReviewSession: nextSessionForReview,
-            lastReviewedSession: currentSessionNumber,
-          };
-        }
-        return q;
-      })
-    );
     setIsAnswerSubmitted(true);
   };
 
@@ -201,18 +214,10 @@ export default function StudySessionPage() {
     setShowResults(false);
     setIsAnswerSubmitted(false);
     setIsLoading(false);
-    // prevSessionNumberRef.current needs to be "reset" conceptually for restart,
-    // so we set it to null to force re-evaluation in the main useEffect if session number hasn't changed
-    // or simply re-trigger session setup. Simpler: just ensure session state is fully reset.
-    // The existing logic of setting currentSessionNumber then prevSessionNumberRef.current should handle this fine
-    // if we are truly "restarting" the same session number.
-    // For "Study these questions again", we are re-filtering for the *current* session number.
   };
 
   const handleStartNextSession = () => {
-    // prevSessionNumberRef will be different from the new currentSessionNumber, triggering session setup
     setCurrentSessionNumber(prev => (prev ? prev + 1 : 1)); 
-    // setShowResults(false) is handled by the useEffect for session setup
   };
 
 
@@ -230,7 +235,6 @@ export default function StudySessionPage() {
     );
   }
 
-  // This check should use initialSessionQuestionCount once it's set
   if (initialSessionQuestionCount === 0 && !showResults && !isLoading) {
     return (
       <AppLayout pageTitle={`Study Session ${currentSessionNumber}`}>
@@ -324,4 +328,3 @@ export default function StudySessionPage() {
     </AppLayout>
   );
 }
-
