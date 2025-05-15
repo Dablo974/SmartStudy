@@ -20,7 +20,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  // AlertDialogTrigger, // No longer needed for this approach
 } from "@/components/ui/alert-dialog";
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
@@ -70,7 +69,7 @@ export default function ManageQuestionsPage() {
   
   const handleDeleteSetClick = (setId: string) => {
     setSetToDeleteId(setId);
-    setIsDeleteDialogOpen(true); // Directly open the dialog
+    setIsDeleteDialogOpen(true);
   };
 
   const confirmDeleteAction = () => {
@@ -86,8 +85,8 @@ export default function ManageQuestionsPage() {
       });
       return updatedSets;
     });
-    setIsDeleteDialogOpen(false); // Close the dialog
-    setSetToDeleteId(null); // Reset the ID
+    setIsDeleteDialogOpen(false); 
+    setSetToDeleteId(null); 
   };
 
   if (isLoading) {
@@ -104,16 +103,16 @@ export default function ManageQuestionsPage() {
   return (
     <AppLayout pageTitle="Manage Question Sets">
       {mcqSets.length === 0 ? (
-        <Card className="mt-6">
+        <Card className="mt-6 shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-xl">
               <FileQuestion className="w-6 h-6 text-muted-foreground" />
               No Question Sets Found
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              You haven't uploaded any MCQ sets yet. 
+              You haven't uploaded any MCQ sets yet. Get started by uploading your first set of questions.
             </p>
           </CardContent>
            <CardFooter>
@@ -172,7 +171,7 @@ export default function ManageQuestionsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => { setIsDeleteDialogOpen(false); setSetToDeleteId(null); }}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteAction}>
+            <AlertDialogAction onClick={confirmDeleteAction} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
               Continue
             </AlertDialogAction>
           </AlertDialogFooter>
