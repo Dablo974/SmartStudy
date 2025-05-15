@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { UploadCloud } from 'lucide-react';
-import type { MCQ } from '@/lib/types'; 
+import type { MCQ, McqSet } from '@/lib/types'; 
 
 const formSchema = z.object({
   csvFile: typeof window === 'undefined' 
@@ -22,7 +22,7 @@ const formSchema = z.object({
 
 type McqUploadFormValues = z.infer<typeof formSchema>;
 
-const LOCAL_STORAGE_MCQS_KEY = 'smartStudyProAllMcqs';
+const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 
 export function McqUploadForm() {
   const { toast } = useToast();
@@ -48,7 +48,7 @@ export function McqUploadForm() {
         }
 
         const lines = csvText.split('\n').filter(line => line.trim() !== '');
-        const newMcqs: MCQ[] = [];
+        const parsedMcqs: MCQ[] = [];
         let skippedLines = 0;
 
         const headerKeywords = ['question', 'option', 'correctanswerindex', 'subject', 'explanation'];
@@ -93,41 +93,45 @@ export function McqUploadForm() {
             nextReviewSession: 1, 
             intervalIndex: 0,
             lastReviewedSession: undefined,
-            timesCorrect: 0, // Initialize new field
-            timesIncorrect: 0, // Initialize new field
+            timesCorrect: 0,
+            timesIncorrect: 0,
           };
-          newMcqs.push(mcqToAdd);
+          parsedMcqs.push(mcqToAdd);
         }
 
-        let existingMcqs: MCQ[] = [];
+        let existingMcqSets: McqSet[] = [];
         try {
-          const storedMcqs = localStorage.getItem(LOCAL_STORAGE_MCQS_KEY);
-          if (storedMcqs) {
-            const parsed = JSON.parse(storedMcqs);
+          const storedSets = localStorage.getItem(LOCAL_STORAGE_MCQ_SETS_KEY);
+          if (storedSets) {
+            const parsed = JSON.parse(storedSets);
             if (Array.isArray(parsed)) {
-              existingMcqs = parsed.map(mcq => ({ // Ensure existing MCQs also have new fields
-                ...mcq,
-                timesCorrect: mcq.timesCorrect || 0,
-                timesIncorrect: mcq.timesIncorrect || 0,
-              }));
+              existingMcqSets = parsed;
             } else {
-               console.warn("Stored MCQs were not an array. Initializing as empty.");
+               console.warn("Stored MCQ sets were not an array. Initializing as empty.");
             }
           }
         } catch (e) {
-          console.error("Failed to parse existing MCQs from localStorage. Old data might be lost if overwritten.", e);
-          existingMcqs = []; 
+          console.error("Failed to parse existing MCQ sets from localStorage.", e);
         }
         
-        const existingIds = new Set(existingMcqs.map(mcq => mcq.id));
-        const uniqueNewMcqs = newMcqs.filter(mcq => !existingIds.has(mcq.id));
+        const newSetId = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
+        const newMcqSet: McqSet = {
+          id: newSetId,
+          fileName: file.name,
+          uploadDate: new Date().toISOString(),
+          mcqs: parsedMcqs,
+          isActive: true,
+        };
 
-        const updatedMcqs = [...existingMcqs, ...uniqueNewMcqs];
-        localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(updatedMcqs));
+        // Check if a set with the same filename already exists to avoid duplicates if desired,
+        // or allow multiple uploads of the same file (current behavior adds new set).
+        // For simplicity, we'll add it as a new set.
+        const updatedMcqSets = [...existingMcqSets, newMcqSet];
+        localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(updatedMcqSets));
 
         toast({
-          title: 'Upload Processed',
-          description: `${uniqueNewMcqs.length} new question(s) added. ${skippedLines} line(s) skipped.`,
+          title: 'Upload Successful',
+          description: `${parsedMcqs.length} question(s) from "${file.name}" added. ${skippedLines} line(s) skipped.`,
         });
 
       } catch (error) {

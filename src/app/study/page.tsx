@@ -3,7 +3,7 @@
 
 import { AppLayout } from '@/components/layout/AppLayout';
 import { QuestionDisplay } from '@/components/study/QuestionDisplay';
-import type { MCQ } from '@/lib/types';
+import type { MCQ, McqSet } from '@/lib/types';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,23 +12,29 @@ import { CheckCircle, XCircle, Zap, CalendarCheck2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
-const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; // Spaced repetition intervals in sessions
+const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; 
 
-// Initial set of MCQs (mock data) - only used if localStorage is empty FOR THE VERY FIRST TIME
-const initialMcqsFromMock: Omit<MCQ, 'nextReviewSession' | 'intervalIndex' | 'lastReviewedSession' | 'timesCorrect' | 'timesIncorrect'>[] = [
-  { id: '1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswerIndex: 2, subject: 'Geography', explanation: 'Paris is the capital and most populous city of France.' },
-  { id: '2', question: 'Which planet is known as the Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Saturn'], correctAnswerIndex: 1, subject: 'Astronomy', explanation: 'Mars is often called the Red Planet because of its reddish appearance.' },
-  { id: '3', question: 'What is the chemical symbol for water?', options: ['O2', 'H2O', 'CO2', 'NaCl'], correctAnswerIndex: 1, subject: 'Chemistry', explanation: 'H2O represents two hydrogen atoms and one oxygen atom.' },
-  { id: '4', question: 'Who wrote "Hamlet"?', options: ['Charles Dickens', 'William Shakespeare', 'Leo Tolstoy', 'Mark Twain'], correctAnswerIndex: 1, subject: 'Literature', explanation: 'Hamlet is a tragedy written by William Shakespeare.' },
-  { id: '5', question: 'What is the square root of 64?', options: ['6', '7', '8', '9'], correctAnswerIndex: 2, subject: 'Mathematics', explanation: 'The square root of 64 is 8, because 8 * 8 = 64.' },
-];
-
-const LOCAL_STORAGE_MCQS_KEY = 'smartStudyProAllMcqs';
+// localStorage keys
+const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 const LOCAL_STORAGE_SESSION_KEY = 'smartStudyProCurrentSession';
+
+// Default mock data for the very first run if no sets exist
+const initialMockMcqSet: McqSet = {
+  id: 'mock-set-initial',
+  fileName: 'Sample Questions',
+  uploadDate: new Date().toISOString(),
+  isActive: true,
+  mcqs: [
+    { id: 'mock-1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswerIndex: 2, subject: 'Geography', explanation: 'Paris is the capital and most populous city of France.', nextReviewSession: 1, intervalIndex: 0, timesCorrect: 0, timesIncorrect: 0 },
+    { id: 'mock-2', question: 'Which planet is known as the Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Saturn'], correctAnswerIndex: 1, subject: 'Astronomy', explanation: 'Mars is often called the Red Planet because of its reddish appearance.', nextReviewSession: 1, intervalIndex: 0, timesCorrect: 0, timesIncorrect: 0 },
+    { id: 'mock-3', question: 'What is the chemical symbol for water?', options: ['O2', 'H2O', 'CO2', 'NaCl'], correctAnswerIndex: 1, subject: 'Chemistry', explanation: 'H2O represents two hydrogen atoms and one oxygen atom.', nextReviewSession: 1, intervalIndex: 0, timesCorrect: 0, timesIncorrect: 0 },
+  ]
+};
 
 
 export default function StudySessionPage() {
-  const [allMcqs, setAllMcqs] = useState<MCQ[] | null>(null);
+  const [allMcqSets, setAllMcqSets] = useState<McqSet[] | null>(null);
+  const [allMcqsFlat, setAllMcqsFlat] = useState<MCQ[]>([]); // Flattened list of MCQs from active sets
   const [sessionQuestions, setSessionQuestions] = useState<MCQ[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [initialSessionQuestionCount, setInitialSessionQuestionCount] = useState(0);
@@ -40,85 +46,77 @@ export default function StudySessionPage() {
   const [currentSessionNumber, setCurrentSessionNumber] = useState<number | null>(null);
   const prevSessionNumberRef = useRef<number | null>(null);
 
-  // Effect for initial loading from localStorage or setting defaults
+  // Effect for initial loading of McqSets and session number from localStorage
   useEffect(() => {
     setIsLoading(true);
-    let mcqsToSet: MCQ[];
+    let mcqSetsToUse: McqSet[];
 
-    const storedMcqsString = localStorage.getItem(LOCAL_STORAGE_MCQS_KEY);
+    const storedSetsString = localStorage.getItem(LOCAL_STORAGE_MCQ_SETS_KEY);
 
-    if (storedMcqsString === null) {
-      // No MCQs ever stored (key does not exist). This is the ONLY case to use mock data.
-      mcqsToSet = initialMcqsFromMock.map((mcq) => ({
-        ...mcq,
-        nextReviewSession: 1,
-        intervalIndex: 0,
-        lastReviewedSession: undefined,
-        timesCorrect: 0,
-        timesIncorrect: 0,
-      }));
-      localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(mcqsToSet));
+    if (storedSetsString === null) {
+      // No sets ever stored. Use mock data as the first set.
+      mcqSetsToUse = [initialMockMcqSet];
+      localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(mcqSetsToUse));
     } else {
-      // Key exists in localStorage. Use this data, even if it's an empty array or corrupted.
       try {
-        const parsedMcqs = JSON.parse(storedMcqsString);
-        if (Array.isArray(parsedMcqs)) {
-          mcqsToSet = parsedMcqs.map(mcq => ({ // Ensure all fields are present with defaults
-            id: mcq.id || `migrated-${Date.now()}-${Math.random().toString(36).substring(2,9)}`,
-            question: mcq.question || "Default Question Text",
-            options: Array.isArray(mcq.options) && mcq.options.length === 4 ? mcq.options : ["Opt A", "Opt B", "Opt C", "Opt D"],
-            correctAnswerIndex: typeof mcq.correctAnswerIndex === 'number' ? mcq.correctAnswerIndex : 0,
-            subject: mcq.subject,
-            explanation: mcq.explanation,
-            nextReviewSession: typeof mcq.nextReviewSession === 'number' ? mcq.nextReviewSession : 1,
-            intervalIndex: typeof mcq.intervalIndex === 'number' ? mcq.intervalIndex : 0,
-            lastReviewedSession: mcq.lastReviewedSession,
-            timesCorrect: typeof mcq.timesCorrect === 'number' ? mcq.timesCorrect : 0,
-            timesIncorrect: typeof mcq.timesIncorrect === 'number' ? mcq.timesIncorrect : 0,
+        const parsedSets = JSON.parse(storedSetsString);
+        if (Array.isArray(parsedSets)) {
+          // Ensure all sets and MCQs have necessary fields with defaults
+          mcqSetsToUse = parsedSets.map((set: any) => ({
+            id: set.id || `set-${Date.now()}-${Math.random()}`,
+            fileName: set.fileName || "Unknown File",
+            uploadDate: set.uploadDate || new Date().toISOString(),
+            isActive: typeof set.isActive === 'boolean' ? set.isActive : true,
+            mcqs: Array.isArray(set.mcqs) ? set.mcqs.map((mcq: any) => ({
+              id: mcq.id || `mcq-${Date.now()}-${Math.random()}`,
+              question: mcq.question || "Default Question Text",
+              options: Array.isArray(mcq.options) && mcq.options.length === 4 ? mcq.options : ["A", "B", "C", "D"],
+              correctAnswerIndex: typeof mcq.correctAnswerIndex === 'number' ? mcq.correctAnswerIndex : 0,
+              subject: mcq.subject,
+              explanation: mcq.explanation,
+              nextReviewSession: typeof mcq.nextReviewSession === 'number' ? mcq.nextReviewSession : 1,
+              intervalIndex: typeof mcq.intervalIndex === 'number' ? mcq.intervalIndex : 0,
+              lastReviewedSession: mcq.lastReviewedSession,
+              timesCorrect: typeof mcq.timesCorrect === 'number' ? mcq.timesCorrect : 0,
+              timesIncorrect: typeof mcq.timesIncorrect === 'number' ? mcq.timesIncorrect : 0,
+            })) : [],
           }));
         } else {
-          // Data in localStorage under the key is not an array (corrupted). Default to an empty array.
-          console.warn("MCQs in localStorage were not an array. Resetting to empty.");
-          mcqsToSet = [];
-          localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(mcqsToSet)); // Save the corrected empty state
+          console.warn("MCQ sets in localStorage were not an array. Resetting to empty.");
+          mcqSetsToUse = []; // Start with an empty array of sets if data is corrupted
+          localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(mcqSetsToUse));
         }
       } catch (e) {
-        // JSON parsing error (corrupted). Default to an empty array.
-        console.error("Failed to parse MCQs from localStorage. Resetting to empty.", e);
-        mcqsToSet = [];
-        localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(mcqsToSet)); // Save the corrected empty state
+        console.error("Failed to parse MCQ sets from localStorage. Resetting to empty.", e);
+        mcqSetsToUse = []; // Start with an empty array of sets on error
+        localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(mcqSetsToUse));
       }
     }
-    setAllMcqs(mcqsToSet);
+    setAllMcqSets(mcqSetsToUse);
 
-    // Load session number (existing logic)
+    // Load session number
     let loadedSessionNumber: number | null = null;
     try {
       const storedSessionNum = localStorage.getItem(LOCAL_STORAGE_SESSION_KEY);
       if (storedSessionNum) {
         const parsedNum = parseInt(storedSessionNum, 10);
-        if (!isNaN(parsedNum)) {
-          loadedSessionNumber = parsedNum;
-        }
+        if (!isNaN(parsedNum)) loadedSessionNumber = parsedNum;
       }
-    } catch (e) { console.error("Failed to parse session number from localStorage", e); }
+    } catch (e) { console.error("Failed to parse session number", e); }
 
-    if (loadedSessionNumber) {
-      setCurrentSessionNumber(loadedSessionNumber);
-    } else {
-      setCurrentSessionNumber(1);
+    setCurrentSessionNumber(loadedSessionNumber || 1);
+    if (!loadedSessionNumber) {
       localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, '1');
     }
-    // setIsLoading(false) will be handled by the session setup effect
+    // setIsLoading will be handled by the subsequent effect
   }, []);
 
-
-  // Effect to save allMcqs to localStorage
+  // Effect to save allMcqSets to localStorage
   useEffect(() => {
-    if (allMcqs !== null && !isLoading) {
-      localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(allMcqs));
+    if (allMcqSets !== null && !isLoading) { // Only save if not loading and sets are initialized
+      localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(allMcqSets));
     }
-  }, [allMcqs, isLoading]);
+  }, [allMcqSets, isLoading]);
 
   // Effect to save currentSessionNumber to localStorage
   useEffect(() => {
@@ -126,17 +124,23 @@ export default function StudySessionPage() {
       localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, currentSessionNumber.toString());
     }
   }, [currentSessionNumber, isLoading]);
-  
-  // Effect to set up session questions when currentSessionNumber changes or allMcqs are initially loaded
+
+  // Effect to flatten active MCQs and set up session questions
   useEffect(() => {
-    if (allMcqs === null || currentSessionNumber === null) {
-      setIsLoading(true); 
+    if (allMcqSets === null || currentSessionNumber === null) {
+      setIsLoading(true);
       return;
     }
 
-    if (prevSessionNumberRef.current !== currentSessionNumber) {
-      setIsLoading(true); 
-      const dueQuestions = allMcqs
+    // Flatten MCQs from active sets
+    const activeMcqs = allMcqSets
+      .filter(set => set.isActive)
+      .reduce((acc, set) => acc.concat(set.mcqs), [] as MCQ[]);
+    setAllMcqsFlat(activeMcqs);
+
+    if (prevSessionNumberRef.current !== currentSessionNumber || allMcqsFlat.length > 0) { // Re-filter if session changes or mcqs load
+      setIsLoading(true);
+      const dueQuestions = activeMcqs
         .filter(q => q.nextReviewSession <= currentSessionNumber)
         .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
 
@@ -144,52 +148,58 @@ export default function StudySessionPage() {
       setInitialSessionQuestionCount(dueQuestions.length);
       setCurrentQuestionIndex(0);
       setScore(0);
-      setShowResults(false); 
+      setShowResults(false);
       setIsAnswerSubmitted(false);
       prevSessionNumberRef.current = currentSessionNumber;
       setIsLoading(false);
-    } else if (isLoading) { // Handles the case where allMcqs might have loaded but session number didn't change yet.
-      setIsLoading(false);
+    } else if (isLoading) { // Handles initial load where session might not change but data becomes available
+        setIsLoading(false);
     }
-  }, [allMcqs, currentSessionNumber, isLoading]);
+  }, [allMcqSets, currentSessionNumber, isLoading]);
 
 
   const handleAnswerSubmit = (isCorrect: boolean) => {
-    if (!sessionQuestions[currentQuestionIndex] || currentSessionNumber === null) return;
+    if (!sessionQuestions[currentQuestionIndex] || currentSessionNumber === null || allMcqSets === null) return;
     
     const currentQuestionId = sessionQuestions[currentQuestionIndex].id;
 
-    setAllMcqs(prevAllMcqs => 
-      (prevAllMcqs || []).map(q => {
-        if (q.id === currentQuestionId) {
-          let newIntervalIndex = q.intervalIndex;
-          let newTimesCorrect = q.timesCorrect;
-          let newTimesIncorrect = q.timesIncorrect;
+    setAllMcqSets(prevSets => 
+      (prevSets || []).map(set => {
+        // Find the MCQ in its set and update it
+        const mcqIndex = set.mcqs.findIndex(mcq => mcq.id === currentQuestionId);
+        if (mcqIndex === -1) return set; // Not in this set
 
-          if (isCorrect) {
-            newTimesCorrect++;
-            newIntervalIndex = q.intervalIndex + 1;
-            if (newIntervalIndex >= REVIEW_INTERVALS_SESSIONS.length) {
-              newIntervalIndex = REVIEW_INTERVALS_SESSIONS.length - 1;
-            }
-          } else {
-            newTimesIncorrect++;
-            newIntervalIndex = 0; 
+        const q = set.mcqs[mcqIndex];
+        let newIntervalIndex = q.intervalIndex;
+        let newTimesCorrect = q.timesCorrect;
+        let newTimesIncorrect = q.timesIncorrect;
+
+        if (isCorrect) {
+          newTimesCorrect++;
+          newIntervalIndex = q.intervalIndex + 1;
+          if (newIntervalIndex >= REVIEW_INTERVALS_SESSIONS.length) {
+            newIntervalIndex = REVIEW_INTERVALS_SESSIONS.length - 1;
           }
-          
-          const sessionsToWait = REVIEW_INTERVALS_SESSIONS[newIntervalIndex];
-          const nextSessionForReview = currentSessionNumber + sessionsToWait;
-          
-          return {
-            ...q,
-            intervalIndex: newIntervalIndex,
-            nextReviewSession: nextSessionForReview,
-            lastReviewedSession: currentSessionNumber,
-            timesCorrect: newTimesCorrect,
-            timesIncorrect: newTimesIncorrect,
-          };
+        } else {
+          newTimesIncorrect++;
+          newIntervalIndex = 0; 
         }
-        return q;
+        
+        const sessionsToWait = REVIEW_INTERVALS_SESSIONS[newIntervalIndex];
+        const nextSessionForReview = currentSessionNumber + sessionsToWait;
+        
+        const updatedMcq = {
+          ...q,
+          intervalIndex: newIntervalIndex,
+          nextReviewSession: nextSessionForReview,
+          lastReviewedSession: currentSessionNumber,
+          timesCorrect: newTimesCorrect,
+          timesIncorrect: newTimesIncorrect,
+        };
+        
+        const updatedMcqsInSet = [...set.mcqs];
+        updatedMcqsInSet[mcqIndex] = updatedMcq;
+        return { ...set, mcqs: updatedMcqsInSet };
       })
     );
     
@@ -221,9 +231,9 @@ export default function StudySessionPage() {
   };
 
   const restartSession = () => {
-    if (allMcqs === null || currentSessionNumber === null) return;
+     if (allMcqsFlat === null || currentSessionNumber === null) return;
     setIsLoading(true);
-     const dueQuestions = allMcqs
+     const dueQuestions = allMcqsFlat
       .filter(q => q.nextReviewSession <= currentSessionNumber)
       .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
     setSessionQuestions(dueQuestions);
@@ -237,10 +247,11 @@ export default function StudySessionPage() {
 
   const handleStartNextSession = () => {
     setCurrentSessionNumber(prev => (prev ? prev + 1 : 1)); 
+    // The useEffect for currentSessionNumber change will handle resetting the session state
   };
 
 
-  if (isLoading || allMcqs === null || currentSessionNumber === null) {
+  if (isLoading || allMcqSets === null || currentSessionNumber === null) {
     return (
       <AppLayout pageTitle="Study Session">
         <div className="flex flex-col items-center justify-center h-full text-center">
@@ -253,7 +264,7 @@ export default function StudySessionPage() {
       </AppLayout>
     );
   }
-
+  
   if (initialSessionQuestionCount === 0 && !showResults && !isLoading) {
     return (
       <AppLayout pageTitle={`Study Session ${currentSessionNumber}`}>
@@ -267,11 +278,16 @@ export default function StudySessionPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-lg text-muted-foreground">
-                There are no questions due for study in this session. Great job staying on top of your reviews!
+                There are no questions from active sets due for study in this session. Great job staying on top of your reviews!
               </p>
               <Button onClick={handleStartNextSession} className="w-full">
                 Start Next Session (Session {currentSessionNumber + 1})
               </Button>
+              <Link href="/manage-questions" passHref>
+                <Button variant="outline" className="w-full mt-2">
+                  Manage Question Sets
+                </Button>
+              </Link>
               <Link href="/" passHref>
                 <Button variant="outline" className="w-full mt-2">
                   Back to Dashboard
@@ -348,4 +364,3 @@ export default function StudySessionPage() {
     </AppLayout>
   );
 }
-

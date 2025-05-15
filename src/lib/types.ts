@@ -15,6 +15,14 @@ export interface MCQ {
   timesIncorrect: number;
 }
 
+export interface McqSet {
+  id: string; // Unique ID for the set (e.g., timestamp_filename or UUID)
+  fileName: string;
+  uploadDate: string; // ISO Date string
+  mcqs: MCQ[];
+  isActive: boolean; // User can toggle this
+}
+
 export interface UserProgress {
   totalQuestionsStudied: number;
   correctAnswers: number;

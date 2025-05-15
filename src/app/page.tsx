@@ -1,19 +1,18 @@
 
-"use client"; // Required for useEffect and localStorage access
+"use client"; 
 
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PerformanceSummary } from '@/components/dashboard/PerformanceSummary';
 import { ProgressChart } from '@/components/dashboard/ProgressChart';
-import type { UserProgress, MCQ } from '@/lib/types';
+import type { UserProgress, MCQ, McqSet } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
 
-const LOCAL_STORAGE_MCQS_KEY = 'smartStudyProAllMcqs';
+const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 
-// Default mock data if localStorage is empty or not ready
 const initialUserProgress: UserProgress = {
   totalQuestionsStudied: 0,
   correctAnswers: 0,
@@ -29,34 +28,32 @@ export default function DashboardPage() {
   useEffect(() => {
     setIsLoading(true);
     try {
-      const storedMcqs = localStorage.getItem(LOCAL_STORAGE_MCQS_KEY);
-      if (storedMcqs) {
-        const allMcqs: MCQ[] = JSON.parse(storedMcqs).map((mcq: MCQ) => ({
-          ...mcq,
-          timesCorrect: mcq.timesCorrect || 0,
-          timesIncorrect: mcq.timesIncorrect || 0,
-        }));
+      const storedMcqSetsString = localStorage.getItem(LOCAL_STORAGE_MCQ_SETS_KEY);
+      if (storedMcqSetsString) {
+        const allMcqSets: McqSet[] = JSON.parse(storedMcqSetsString);
+        const activeMcqs: MCQ[] = allMcqSets
+          .filter(set => set.isActive)
+          .reduce((acc, set) => acc.concat(set.mcqs), [] as MCQ[]);
 
-        if (allMcqs.length > 0) {
-          const totalQuestionsStudied = allMcqs.filter(q => q.lastReviewedSession !== undefined).length;
-          const correctAnswers = allMcqs.reduce((sum, q) => sum + q.timesCorrect, 0);
-          const incorrectAnswers = allMcqs.reduce((sum, q) => sum + q.timesIncorrect, 0);
+        if (activeMcqs.length > 0) {
+          const totalQuestionsStudied = activeMcqs.filter(q => q.lastReviewedSession !== undefined).length;
+          const correctAnswers = activeMcqs.reduce((sum, q) => sum + (q.timesCorrect || 0), 0);
+          const incorrectAnswers = activeMcqs.reduce((sum, q) => sum + (q.timesIncorrect || 0), 0);
           const totalAnswered = correctAnswers + incorrectAnswers;
           const accuracy = totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
 
           const topicMastery: { [topic: string]: number } = {};
           const questionsByTopic: { [topic: string]: { total: number, correct: number } } = {};
 
-          allMcqs.forEach(q => {
+          activeMcqs.forEach(q => {
             if (q.subject) {
               if (!questionsByTopic[q.subject]) {
                 questionsByTopic[q.subject] = { total: 0, correct: 0 };
               }
-              // Consider a question contributing to topic mastery if it has been answered at least once
-              const answeredInTopic = q.timesCorrect + q.timesIncorrect;
+              const answeredInTopic = (q.timesCorrect || 0) + (q.timesIncorrect || 0);
               if (answeredInTopic > 0) {
-                 questionsByTopic[q.subject].total += answeredInTopic; // Total attempts for this topic
-                 questionsByTopic[q.subject].correct += q.timesCorrect; // Total correct for this topic
+                 questionsByTopic[q.subject].total += answeredInTopic;
+                 questionsByTopic[q.subject].correct += (q.timesCorrect || 0);
               }
             }
           });
@@ -65,7 +62,6 @@ export default function DashboardPage() {
             if (questionsByTopic[topic].total > 0) {
               topicMastery[topic] = (questionsByTopic[topic].correct / questionsByTopic[topic].total) * 100;
             } else {
-              // If a topic exists but has no answered questions yet, mastery is 0
               topicMastery[topic] = 0; 
             }
           }
@@ -78,10 +74,10 @@ export default function DashboardPage() {
             topicMastery,
           });
         } else {
-          setUserProgress(initialUserProgress); // No questions, use initial state
+          setUserProgress(initialUserProgress); // No active questions
         }
       } else {
-         setUserProgress(initialUserProgress); // No stored MCQs, use initial state
+         setUserProgress(initialUserProgress); // No stored MCQ sets
       }
     } catch (e) {
       console.error("Failed to load or process dashboard data from localStorage", e);
@@ -108,13 +104,13 @@ export default function DashboardPage() {
         <PerformanceSummary progress={userProgress} />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <ProgressChart topicMastery={userProgress.topicMastery} /> 
+            <ProgressChart topicMastery={userProgress.topicMastery || {}} /> 
           </div>
           <Card>
             <CardHeader>
               <CardTitle>Start Studying</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center space-y-4 text-center h-[calc(100%-4rem)]"> {/* Adjust height based on card header */}
+            <CardContent className="flex flex-col items-center justify-center space-y-4 text-center h-[calc(100%-4rem)]">
               <p className="text-muted-foreground">
                 Ready for your next session? Jump in and keep learning!
               </p>
@@ -124,11 +120,11 @@ export default function DashboardPage() {
                 </Button>
               </Link>
                <p className="text-sm text-muted-foreground pt-4">
-                Or, upload more questions to expand your knowledge base.
+                Or, manage your question sets and upload more.
               </p>
-              <Link href="/upload" passHref>
+              <Link href="/manage-questions" passHref>
                 <Button variant="outline" size="lg" className="w-full max-w-xs">
-                  Upload MCQs
+                  Manage Questions
                 </Button>
               </Link>
             </CardContent>
@@ -140,7 +136,7 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle>Topic Mastery Details</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0"> {/* Adjusted padding */}
+            <CardContent className="pt-0">
               <ul className="space-y-2">
                 {Object.entries(userProgress.topicMastery).map(([topic, mastery]) => (
                   <li key={topic} className="flex justify-between items-center p-2 hover:bg-muted/50 rounded-md">

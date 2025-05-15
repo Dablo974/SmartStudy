@@ -1,8 +1,9 @@
+
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, BookOpenText, UploadCloud, Settings } from 'lucide-react';
+import { LayoutDashboard, BookOpenText, UploadCloud, Settings, ListChecks } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -15,6 +16,7 @@ const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/study', label: 'Study Session', icon: BookOpenText },
   { href: '/upload', label: 'Upload MCQs', icon: UploadCloud },
+  { href: '/manage-questions', label: 'Manage Questions', icon: ListChecks },
   // { href: '/settings', label: 'Settings', icon: Settings }, // Example for future expansion
 ];
 
