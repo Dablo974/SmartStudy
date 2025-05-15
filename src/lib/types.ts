@@ -20,9 +20,6 @@ export interface UserProgress {
   correctAnswers: number;
   incorrectAnswers: number;
   accuracy: number; // percentage
-  currentStreak: number; // days
-  longestStreak: number; // days
-  lastStudiedDate?: string; // ISO date string
   topicMastery?: { [topic: string]: number }; // percentage mastery per topic
 }
 

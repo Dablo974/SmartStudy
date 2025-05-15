@@ -14,19 +14,16 @@ import { Zap } from 'lucide-react';
 const LOCAL_STORAGE_MCQS_KEY = 'smartStudyProAllMcqs';
 
 // Default mock data if localStorage is empty or not ready
-const initialMockUserProgress: UserProgress = {
+const initialUserProgress: UserProgress = {
   totalQuestionsStudied: 0,
   correctAnswers: 0,
   incorrectAnswers: 0,
   accuracy: 0,
-  currentStreak: 5, // Kept from original mock for now
-  longestStreak: 12, // Kept from original mock for now
-  lastStudiedDate: new Date().toISOString(), // Kept from original mock for now
   topicMastery: {},
 };
 
 export default function DashboardPage() {
-  const [userProgress, setUserProgress] = useState<UserProgress>(initialMockUserProgress);
+  const [userProgress, setUserProgress] = useState<UserProgress>(initialUserProgress);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -73,23 +70,22 @@ export default function DashboardPage() {
             }
           }
           
-          setUserProgress(prev => ({
-            ...prev, // Keep streak data from mock for now
+          setUserProgress({
             totalQuestionsStudied,
             correctAnswers,
             incorrectAnswers,
             accuracy,
             topicMastery,
-          }));
+          });
         } else {
-          setUserProgress(initialMockUserProgress); // No questions, use initial state
+          setUserProgress(initialUserProgress); // No questions, use initial state
         }
       } else {
-         setUserProgress(initialMockUserProgress); // No stored MCQs, use initial state
+         setUserProgress(initialUserProgress); // No stored MCQs, use initial state
       }
     } catch (e) {
       console.error("Failed to load or process dashboard data from localStorage", e);
-      setUserProgress(initialMockUserProgress); // Fallback on error
+      setUserProgress(initialUserProgress); // Fallback on error
     }
     setIsLoading(false);
   }, []);

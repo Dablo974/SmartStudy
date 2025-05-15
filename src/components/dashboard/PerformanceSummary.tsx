@@ -1,6 +1,7 @@
+
 import type { UserProgress } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Target, CheckCircle2, BookOpenText } from 'lucide-react';
+import { Target, BookOpenText } from 'lucide-react';
 
 interface PerformanceSummaryProps {
   progress: UserProgress;
@@ -22,11 +23,9 @@ const StatCard = ({ title, value, icon: Icon, unit, colorClass = "text-primary" 
 
 export function PerformanceSummary({ progress }: PerformanceSummaryProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2">
       <StatCard title="Total Studied" value={progress.totalQuestionsStudied} icon={BookOpenText} colorClass="text-accent" />
       <StatCard title="Accuracy" value={`${progress.accuracy.toFixed(1)}`} unit="%" icon={Target} colorClass="text-green-500" />
-      <StatCard title="Current Streak" value={progress.currentStreak} unit=" days" icon={TrendingUp} colorClass="text-orange-500" />
-      <StatCard title="Longest Streak" value={progress.longestStreak} unit=" days" icon={CheckCircle2} colorClass="text-blue-500" />
     </div>
   );
 }
