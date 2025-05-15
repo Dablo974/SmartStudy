@@ -55,10 +55,11 @@ export default function DashboardPage() {
               if (!questionsByTopic[q.subject]) {
                 questionsByTopic[q.subject] = { total: 0, correct: 0 };
               }
+              // Consider a question contributing to topic mastery if it has been answered at least once
               const answeredInTopic = q.timesCorrect + q.timesIncorrect;
               if (answeredInTopic > 0) {
-                 questionsByTopic[q.subject].total += answeredInTopic;
-                 questionsByTopic[q.subject].correct += q.timesCorrect;
+                 questionsByTopic[q.subject].total += answeredInTopic; // Total attempts for this topic
+                 questionsByTopic[q.subject].correct += q.timesCorrect; // Total correct for this topic
               }
             }
           });
@@ -67,7 +68,8 @@ export default function DashboardPage() {
             if (questionsByTopic[topic].total > 0) {
               topicMastery[topic] = (questionsByTopic[topic].correct / questionsByTopic[topic].total) * 100;
             } else {
-              topicMastery[topic] = 0;
+              // If a topic exists but has no answered questions yet, mastery is 0
+              topicMastery[topic] = 0; 
             }
           }
           
@@ -110,14 +112,13 @@ export default function DashboardPage() {
         <PerformanceSummary progress={userProgress} />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            {/* ProgressChart still uses mock data, can be updated in a future step */}
-            <ProgressChart /> 
+            <ProgressChart topicMastery={userProgress.topicMastery} /> 
           </div>
           <Card>
             <CardHeader>
               <CardTitle>Start Studying</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center space-y-4 text-center h-full">
+            <CardContent className="flex flex-col items-center justify-center space-y-4 text-center h-[calc(100%-4rem)]"> {/* Adjust height based on card header */}
               <p className="text-muted-foreground">
                 Ready for your next session? Jump in and keep learning!
               </p>
@@ -141,18 +142,18 @@ export default function DashboardPage() {
         {userProgress.topicMastery && Object.keys(userProgress.topicMastery).length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Topic Mastery</CardTitle>
-              <CardContent className="pt-4">
-                <ul className="space-y-2">
-                  {Object.entries(userProgress.topicMastery).map(([topic, mastery]) => (
-                    <li key={topic} className="flex justify-between items-center">
-                      <span className="font-medium text-foreground">{topic}</span>
-                      <span className="text-sm text-muted-foreground">{mastery.toFixed(1)}%</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
+              <CardTitle>Topic Mastery Details</CardTitle>
             </CardHeader>
+            <CardContent className="pt-0"> {/* Adjusted padding */}
+              <ul className="space-y-2">
+                {Object.entries(userProgress.topicMastery).map(([topic, mastery]) => (
+                  <li key={topic} className="flex justify-between items-center p-2 hover:bg-muted/50 rounded-md">
+                    <span className="font-medium text-foreground">{topic}</span>
+                    <span className="text-sm font-semibold text-accent">{mastery.toFixed(1)}%</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
           </Card>
         )}
       </div>

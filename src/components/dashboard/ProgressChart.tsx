@@ -1,52 +1,81 @@
+
 "use client";
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
+import { ChartConfig, ChartContainer, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useMemo } from 'react';
 
-const chartData = [
-  { day: "Mon", studied: 5, goal: 10 },
-  { day: "Tue", studied: 8, goal: 10 },
-  { day: "Wed", studied: 12, goal: 10 },
-  { day: "Thu", studied: 7, goal: 10 },
-  { day: "Fri", studied: 10, goal: 10 },
-  { day: "Sat", studied: 15, goal: 15 },
-  { day: "Sun", studied: 3, goal: 10 },
-];
+interface ProgressChartProps {
+  topicMastery?: { [topic: string]: number };
+}
 
 const chartConfig = {
-  studied: {
-    label: "Questions Studied",
+  mastery: {
+    label: "Mastery %",
     color: "hsl(var(--chart-1))",
-  },
-  goal: {
-    label: "Daily Goal",
-    color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
 
-export function ProgressChart() {
+export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
+  const chartData = useMemo(() => {
+    return Object.entries(topicMastery)
+      .map(([topic, masteryValue]) => ({
+        topic: topic,
+        mastery: parseFloat(masteryValue.toFixed(1)), // Ensure mastery is a number
+      }))
+      .sort((a, b) => b.mastery - a.mastery); // Sort by mastery descending
+  }, [topicMastery]);
+
+  const NoDataDisplay = () => (
+    <div className="flex flex-col items-center justify-center h-[300px] text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bar-chart-3 text-muted-foreground mb-4">
+        <path d="M3 3v18h18"/>
+        <path d="M7 16V8"/>
+        <path d="M12 16V4"/>
+        <path d="M17 16v-3"/>
+      </svg>
+      <p className="text-muted-foreground">No topic mastery data available yet.</p>
+      <p className="text-sm text-muted-foreground">Start studying or upload questions to see your progress!</p>
+    </div>
+  );
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Weekly Study Progress</CardTitle>
-        <CardDescription>Number of questions studied vs. daily goal.</CardDescription>
+        <CardTitle>Topic Mastery Overview</CardTitle>
+        <CardDescription>Your current mastery level across different topics.</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-            <RechartsTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="dot" />}
-            />
-            <ChartLegend content={<ChartLegendContent />} />
-            <Bar dataKey="studied" fill="var(--color-studied)" radius={4} />
-            <Bar dataKey="goal" fill="var(--color-goal)" radius={4} />
-          </BarChart>
-        </ChartContainer>
+        {chartData.length === 0 ? (
+          <NoDataDisplay />
+        ) : (
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <BarChart 
+              data={chartData} 
+              margin={{ top: 5, right: 20, left: -5, bottom: 5 }}
+              layout="vertical" // Change to vertical layout for better topic label readability
+            >
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" domain={[0, 100]} tickLine={false} axisLine={false} tickMargin={8} />
+              <YAxis 
+                dataKey="topic" 
+                type="category" 
+                tickLine={false} 
+                axisLine={false} 
+                tickMargin={8} 
+                width={80} // Adjust width for topic labels
+                interval={0} // Show all topic labels
+              />
+              <RechartsTooltip
+                cursor={{ fill: 'hsl(var(--muted))' }}
+                content={<ChartTooltipContent indicator="dot" />}
+              />
+              <ChartLegend content={<ChartLegendContent />} />
+              <Bar dataKey="mastery" fill="var(--color-mastery)" radius={4} barSize={20} />
+            </BarChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   );
