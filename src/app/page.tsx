@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 
@@ -101,12 +102,14 @@ export default function DashboardPage() {
   return (
     <AppLayout pageTitle="Dashboard">
       <div className="space-y-6">
-        <PerformanceSummary progress={userProgress} />
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+          <PerformanceSummary progress={userProgress} />
+        </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-100">
             <ProgressChart topicMastery={userProgress.topicMastery || {}} /> 
           </div>
-          <Card>
+          <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-200">
             <CardHeader>
               <CardTitle>Start Studying</CardTitle>
             </CardHeader>
@@ -132,14 +135,18 @@ export default function DashboardPage() {
         </div>
         
         {userProgress.topicMastery && Object.keys(userProgress.topicMastery).length > 0 && (
-          <Card>
+          <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-300">
             <CardHeader>
               <CardTitle>Topic Mastery Details</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <ul className="space-y-2">
-                {Object.entries(userProgress.topicMastery).map(([topic, mastery]) => (
-                  <li key={topic} className="flex justify-between items-center p-2 hover:bg-muted/50 rounded-md">
+                {Object.entries(userProgress.topicMastery).map(([topic, mastery], index) => (
+                  <li 
+                    key={topic} 
+                    className="flex justify-between items-center p-2 hover:bg-muted/50 rounded-md animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
+                    style={{ animationDelay: `${index * 75 + 400}ms` }}
+                  >
                     <span className="font-medium text-foreground">{topic}</span>
                     <span className="text-sm font-semibold text-accent">{mastery.toFixed(1)}%</span>
                   </li>

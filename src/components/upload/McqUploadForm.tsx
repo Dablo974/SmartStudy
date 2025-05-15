@@ -11,6 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { UploadCloud } from 'lucide-react';
 import type { MCQ, McqSet } from '@/lib/types'; 
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   csvFile: typeof window === 'undefined' 
@@ -123,9 +124,6 @@ export function McqUploadForm() {
           isActive: true,
         };
 
-        // Check if a set with the same filename already exists to avoid duplicates if desired,
-        // or allow multiple uploads of the same file (current behavior adds new set).
-        // For simplicity, we'll add it as a new set.
         const updatedMcqSets = [...existingMcqSets, newMcqSet];
         localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(updatedMcqSets));
 
@@ -155,7 +153,7 @@ export function McqUploadForm() {
   }
 
   return (
-    <Card className="w-full max-w-lg shadow-xl">
+    <Card className="w-full max-w-lg shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardHeader>

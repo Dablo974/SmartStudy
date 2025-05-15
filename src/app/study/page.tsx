@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle, XCircle, Zap, CalendarCheck2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; 
 
@@ -269,7 +270,7 @@ export default function StudySessionPage() {
     return (
       <AppLayout pageTitle={`Study Session ${currentSessionNumber}`}>
         <div className="flex flex-col items-center justify-center h-full text-center p-6">
-           <Card className="w-full max-w-md shadow-xl">
+           <Card className="w-full max-w-md shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
             <CardHeader>
               <CardTitle className="text-2xl flex items-center justify-center gap-2">
                 <CalendarCheck2 className="w-8 h-8 text-green-500" />
@@ -307,7 +308,7 @@ export default function StudySessionPage() {
     return (
       <AppLayout pageTitle={`Results for Session ${currentSessionNumber}`}>
         <div className="flex flex-col items-center justify-center h-full text-center p-4">
-          <Card className="w-full max-w-md shadow-xl">
+          <Card className="w-full max-w-md shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
             <CardHeader>
               <CardTitle className="text-2xl">Session {currentSessionNumber} Complete!</CardTitle>
             </CardHeader>

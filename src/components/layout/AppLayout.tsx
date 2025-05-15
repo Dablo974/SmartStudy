@@ -1,3 +1,4 @@
+
 import type { ReactNode } from 'react';
 import {
   Sidebar,
@@ -11,6 +12,7 @@ import { SidebarNav } from './SidebarNav';
 import { Logo } from '@/components/icons/Logo';
 import { Header }
 from './Header'; // Assuming Header is created in the same directory or imported correctly
+import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -35,7 +37,10 @@ export function AppLayout({ children, pageTitle }: AppLayoutProps) {
       </Sidebar>
       <SidebarInset className="flex flex-col">
         <Header title={pageTitle} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className={cn(
+          "flex-1 overflow-y-auto p-4 md:p-6 lg:p-8",
+          "animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
+        )}>
           {children}
         </main>
       </SidebarInset>

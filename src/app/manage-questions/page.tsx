@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from '@/lib/utils';
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 
@@ -103,7 +104,7 @@ export default function ManageQuestionsPage() {
   return (
     <AppLayout pageTitle="Manage Question Sets">
       {mcqSets.length === 0 ? (
-        <Card className="mt-6 shadow-lg">
+        <Card className="mt-6 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
               <FileQuestion className="w-6 h-6 text-muted-foreground" />
@@ -123,8 +124,12 @@ export default function ManageQuestionsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {mcqSets.map(set => (
-            <Card key={set.id} className="shadow-md hover:shadow-lg transition-shadow">
+          {mcqSets.map((set, index) => (
+            <Card 
+              key={set.id} 
+              className="shadow-md hover:shadow-lg transition-shadow animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
