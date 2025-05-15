@@ -20,7 +20,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  // AlertDialogTrigger, // No longer needed for this approach
 } from "@/components/ui/alert-dialog";
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
@@ -68,12 +68,9 @@ export default function ManageQuestionsPage() {
     });
   };
   
-  // This function is called by the Button's onClick when preparing to delete a set.
-  // It should only set the ID of the set to be deleted.
-  // The AlertDialogTrigger will handle signaling the AlertDialog to open via onOpenChange.
   const handleDeleteSetClick = (setId: string) => {
     setSetToDeleteId(setId);
-    // setIsDeleteDialogOpen(true); // This line is removed.
+    setIsDeleteDialogOpen(true); // Directly open the dialog
   };
 
   const confirmDeleteAction = () => {
@@ -137,12 +134,15 @@ export default function ManageQuestionsPage() {
                       Uploaded on: {new Date(set.uploadDate).toLocaleDateString()} | {set.mcqs.length} question(s)
                     </CardDescription>
                   </div>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSetClick(set.id)} className="text-destructive hover:bg-destructive/10">
-                      <Trash2 className="h-5 w-5" />
-                      <span className="sr-only">Delete set</span>
-                    </Button>
-                  </AlertDialogTrigger>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => handleDeleteSetClick(set.id)} 
+                    className="text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                    <span className="sr-only">Delete set</span>
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -171,7 +171,7 @@ export default function ManageQuestionsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSetToDeleteId(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => { setIsDeleteDialogOpen(false); setSetToDeleteId(null); }}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteAction}>
               Continue
             </AlertDialogAction>
