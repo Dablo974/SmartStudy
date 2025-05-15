@@ -4,7 +4,7 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { QuestionDisplay } from '@/components/study/QuestionDisplay';
 import type { MCQ } from '@/lib/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -31,12 +31,14 @@ export default function StudySessionPage() {
   const [allMcqs, setAllMcqs] = useState<MCQ[] | null>(null);
   const [sessionQuestions, setSessionQuestions] = useState<MCQ[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [initialSessionQuestionCount, setInitialSessionQuestionCount] = useState(0);
   const [score, setScore] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [currentSessionNumber, setCurrentSessionNumber] = useState<number | null>(null);
+  const prevSessionNumberRef = useRef<number | null>(null);
 
   // Effect for initial loading from localStorage or setting defaults
   useEffect(() => {
@@ -54,11 +56,12 @@ export default function StudySessionPage() {
     } else {
       const initializedMcqs = initialMcqsFromMock.map((mcq) => ({
         ...mcq,
-        nextReviewSession: 1,
+        nextReviewSession: 1, // Due in the first session
         intervalIndex: 0,
         lastReviewedSession: undefined,
       }));
       setAllMcqs(initializedMcqs);
+      localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(initializedMcqs));
     }
 
     let loadedSessionNumber: number | null = null;
@@ -76,13 +79,14 @@ export default function StudySessionPage() {
       setCurrentSessionNumber(loadedSessionNumber);
     } else {
       setCurrentSessionNumber(1);
+      localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, '1');
     }
-    // setIsLoading(false) will be handled by the next effect after data is processed
-  }, []); // Runs once on mount
+    // setIsLoading(false) will be handled by the session setup effect
+  }, []);
 
   // Effect to save allMcqs to localStorage
   useEffect(() => {
-    if (allMcqs !== null && !isLoading) { // Avoid saving during initial load if allMcqs is just being set
+    if (allMcqs !== null && !isLoading) { 
       localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(allMcqs));
     }
   }, [allMcqs, isLoading]);
@@ -94,26 +98,34 @@ export default function StudySessionPage() {
     }
   }, [currentSessionNumber, isLoading]);
   
-  // Effect to filter session questions when allMcqs or currentSessionNumber changes
+  // Effect to set up session questions when currentSessionNumber changes or allMcqs are initially loaded
   useEffect(() => {
     if (allMcqs === null || currentSessionNumber === null) {
-      setIsLoading(true); // Still waiting for initial data
+      setIsLoading(true); 
       return;
     }
 
-    setIsLoading(true); // Start loading state for filtering
-    const dueQuestions = allMcqs
-      .filter(q => q.nextReviewSession <= currentSessionNumber)
-      .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
+    // Only re-initialize the session if the session number has actually changed.
+    if (prevSessionNumberRef.current !== currentSessionNumber) {
+      setIsLoading(true); 
+      const dueQuestions = allMcqs
+        .filter(q => q.nextReviewSession <= currentSessionNumber)
+        .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
 
-    setSessionQuestions(dueQuestions);
-    setCurrentQuestionIndex(0);
-    setScore(0);
-    // setShowResults(false); // Do not reset showResults here, it's controlled by completing questions or starting new session
-    setIsAnswerSubmitted(false);
-    setIsLoading(false);
-
-  }, [allMcqs, currentSessionNumber]);
+      setSessionQuestions(dueQuestions);
+      setInitialSessionQuestionCount(dueQuestions.length);
+      setCurrentQuestionIndex(0);
+      setScore(0);
+      setShowResults(false); 
+      setIsAnswerSubmitted(false);
+      prevSessionNumberRef.current = currentSessionNumber;
+      setIsLoading(false);
+    } else if (isLoading) {
+      // Catchall for initial load where allMcqs and currentSessionNumber are set but effect didn't run new session logic.
+      // This ensures isLoading is false if it was true from initial guards.
+      setIsLoading(false);
+    }
+  }, [allMcqs, currentSessionNumber, isLoading]);
 
 
   const handleAnswerSubmit = (isCorrect: boolean) => {
@@ -169,7 +181,7 @@ export default function StudySessionPage() {
 
   const handleNextQuestion = () => {
     setIsAnswerSubmitted(false);
-    if (currentQuestionIndex < sessionQuestions.length - 1) {
+    if (currentQuestionIndex < initialSessionQuestionCount - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       setShowResults(true);
@@ -177,23 +189,30 @@ export default function StudySessionPage() {
   };
 
   const restartSession = () => {
-    // Reloads current session questions, typically after "Study These Questions Again"
     if (allMcqs === null || currentSessionNumber === null) return;
     setIsLoading(true);
      const dueQuestions = allMcqs
       .filter(q => q.nextReviewSession <= currentSessionNumber)
       .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
     setSessionQuestions(dueQuestions);
+    setInitialSessionQuestionCount(dueQuestions.length);
     setCurrentQuestionIndex(0);
     setScore(0);
     setShowResults(false);
     setIsAnswerSubmitted(false);
     setIsLoading(false);
+    // prevSessionNumberRef.current needs to be "reset" conceptually for restart,
+    // so we set it to null to force re-evaluation in the main useEffect if session number hasn't changed
+    // or simply re-trigger session setup. Simpler: just ensure session state is fully reset.
+    // The existing logic of setting currentSessionNumber then prevSessionNumberRef.current should handle this fine
+    // if we are truly "restarting" the same session number.
+    // For "Study these questions again", we are re-filtering for the *current* session number.
   };
 
   const handleStartNextSession = () => {
-    setCurrentSessionNumber(prev => (prev ? prev + 1 : 1));
-    setShowResults(false); // Hide results and trigger question reload for the new session
+    // prevSessionNumberRef will be different from the new currentSessionNumber, triggering session setup
+    setCurrentSessionNumber(prev => (prev ? prev + 1 : 1)); 
+    // setShowResults(false) is handled by the useEffect for session setup
   };
 
 
@@ -211,7 +230,8 @@ export default function StudySessionPage() {
     );
   }
 
-  if (sessionQuestions.length === 0 && !showResults) {
+  // This check should use initialSessionQuestionCount once it's set
+  if (initialSessionQuestionCount === 0 && !showResults && !isLoading) {
     return (
       <AppLayout pageTitle={`Study Session ${currentSessionNumber}`}>
         <div className="flex flex-col items-center justify-center h-full text-center p-6">
@@ -241,7 +261,7 @@ export default function StudySessionPage() {
     );
   }
 
-  const progressPercentage = (sessionQuestions.length > 0 ? ((currentQuestionIndex + (isAnswerSubmitted ? 1: 0)) / sessionQuestions.length) * 100 : 0);
+  const progressPercentage = (initialSessionQuestionCount > 0 ? ((currentQuestionIndex + (isAnswerSubmitted ? 1 : 0)) / initialSessionQuestionCount) * 100 : 0);
 
   if (showResults) {
     return (
@@ -253,14 +273,14 @@ export default function StudySessionPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xl">
-                You scored {score} out of {sessionQuestions.length}.
+                You scored {score} out of {initialSessionQuestionCount}.
               </p>
               <div className="flex justify-around text-lg">
                 <div className="flex items-center space-x-2 text-green-600">
                   <CheckCircle /> <span>{score} Correct</span>
                 </div>
                 <div className="flex items-center space-x-2 text-red-600">
-                  <XCircle /> <span>{sessionQuestions.length - score} Incorrect</span>
+                  <XCircle /> <span>{initialSessionQuestionCount - score} Incorrect</span>
                 </div>
               </div>
               <div className="space-y-2 pt-4">
@@ -287,17 +307,17 @@ export default function StudySessionPage() {
     <AppLayout pageTitle={isLoading ? "Study Session" : `Study Session ${currentSessionNumber}`}>
       <div className="flex flex-col items-center space-y-6">
         <Progress value={progressPercentage} className="w-full max-w-2xl" />
-        {sessionQuestions.length > 0 && currentQuestionIndex < sessionQuestions.length && (
+        {sessionQuestions.length > 0 && currentQuestionIndex < sessionQuestions.length && initialSessionQuestionCount > 0 && (
           <QuestionDisplay
             question={sessionQuestions[currentQuestionIndex]}
             onAnswerSubmit={handleAnswerSubmit}
             questionNumber={currentQuestionIndex + 1}
-            totalQuestions={sessionQuestions.length}
+            totalQuestions={initialSessionQuestionCount}
           />
         )}
         {isAnswerSubmitted && (
           <Button onClick={handleNextQuestion} size="lg" className="min-w-[200px]">
-            {currentQuestionIndex < sessionQuestions.length - 1 ? 'Next Question' : 'View Results'}
+            {currentQuestionIndex < initialSessionQuestionCount - 1 ? 'Next Question' : 'View Results'}
           </Button>
         )}
       </div>
