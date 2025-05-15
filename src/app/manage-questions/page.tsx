@@ -11,6 +11,17 @@ import { Button } from '@/components/ui/button';
 import { Trash2, ListChecks, FileQuestion } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 
@@ -18,6 +29,8 @@ export default function ManageQuestionsPage() {
   const [mcqSets, setMcqSets] = useState<McqSet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [setToDeleteId, setSetToDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -25,7 +38,7 @@ export default function ManageQuestionsPage() {
       const storedSetsString = localStorage.getItem(LOCAL_STORAGE_MCQ_SETS_KEY);
       if (storedSetsString) {
         const parsedSets = JSON.parse(storedSetsString) as McqSet[];
-        setMcqSets(parsedSets.map(s => ({...s, isActive: s.isActive === undefined ? true : s.isActive }))); // Ensure isActive defaults to true
+        setMcqSets(parsedSets.map(s => ({...s, isActive: s.isActive === undefined ? true : s.isActive })));
       } else {
         setMcqSets([]);
       }
@@ -56,18 +69,25 @@ export default function ManageQuestionsPage() {
   };
   
   const handleDeleteSet = (setId: string) => {
-    if (confirm('Are you sure you want to delete this question set? This action cannot be undone.')) {
-      setMcqSets(prevSets => {
-        const setToDelete = prevSets.find(s => s.id === setId);
-        const updatedSets = prevSets.filter(set => set.id !== setId);
-        localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(updatedSets));
-        toast({
-          title: `Set "${setToDelete?.fileName}" Deleted`,
-          description: `The question set has been removed.`,
-        });
-        return updatedSets;
+    setSetToDeleteId(setId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteAction = () => {
+    if (!setToDeleteId) return;
+
+    setMcqSets(prevSets => {
+      const setToDelete = prevSets.find(s => s.id === setToDeleteId);
+      const updatedSets = prevSets.filter(set => set.id !== setToDeleteId);
+      localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(updatedSets));
+      toast({
+        title: `Set "${setToDelete?.fileName}" Deleted`,
+        description: `The question set has been removed.`,
       });
-    }
+      return updatedSets;
+    });
+    setIsDeleteDialogOpen(false);
+    setSetToDeleteId(null);
   };
 
   if (isLoading) {
@@ -114,10 +134,12 @@ export default function ManageQuestionsPage() {
                       Uploaded on: {new Date(set.uploadDate).toLocaleDateString()} | {set.mcqs.length} question(s)
                     </CardDescription>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => handleDeleteSet(set.id)} className="text-destructive hover:bg-destructive/10">
-                    <Trash2 className="h-5 w-5" />
-                    <span className="sr-only">Delete set</span>
-                  </Button>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSet(set.id)} className="text-destructive hover:bg-destructive/10">
+                      <Trash2 className="h-5 w-5" />
+                      <span className="sr-only">Delete set</span>
+                    </Button>
+                  </AlertDialogTrigger>
                 </div>
               </CardHeader>
               <CardContent>
@@ -136,6 +158,23 @@ export default function ManageQuestionsPage() {
           ))}
         </div>
       )}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              question set &ldquo;{mcqSets.find(s => s.id === setToDeleteId)?.fileName || ''}&rdquo; and all its questions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSetToDeleteId(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAction}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
