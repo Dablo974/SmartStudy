@@ -68,9 +68,12 @@ export default function ManageQuestionsPage() {
     });
   };
   
-  const handleDeleteSet = (setId: string) => {
+  // This function is called by the Button's onClick when preparing to delete a set.
+  // It should only set the ID of the set to be deleted.
+  // The AlertDialogTrigger will handle signaling the AlertDialog to open via onOpenChange.
+  const handleDeleteSetClick = (setId: string) => {
     setSetToDeleteId(setId);
-    setIsDeleteDialogOpen(true);
+    // setIsDeleteDialogOpen(true); // This line is removed.
   };
 
   const confirmDeleteAction = () => {
@@ -86,8 +89,8 @@ export default function ManageQuestionsPage() {
       });
       return updatedSets;
     });
-    setIsDeleteDialogOpen(false);
-    setSetToDeleteId(null);
+    setIsDeleteDialogOpen(false); // Close the dialog
+    setSetToDeleteId(null); // Reset the ID
   };
 
   if (isLoading) {
@@ -135,7 +138,7 @@ export default function ManageQuestionsPage() {
                     </CardDescription>
                   </div>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSet(set.id)} className="text-destructive hover:bg-destructive/10">
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSetClick(set.id)} className="text-destructive hover:bg-destructive/10">
                       <Trash2 className="h-5 w-5" />
                       <span className="sr-only">Delete set</span>
                     </Button>
