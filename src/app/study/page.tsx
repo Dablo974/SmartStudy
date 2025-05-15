@@ -268,6 +268,7 @@ export default function StudySessionPage() {
   const progressPercentage = (initialSessionQuestionCount > 0 ? ((currentQuestionIndex + (isAnswerSubmitted ? 1 : 0)) / initialSessionQuestionCount) * 100 : 0);
 
   if (showResults) {
+    const sessionAccuracy = initialSessionQuestionCount > 0 ? (score / initialSessionQuestionCount) * 100 : 0;
     return (
       <AppLayout pageTitle={`Results for Session ${currentSessionNumber}`}>
         <div className="flex flex-col items-center justify-center h-full text-center p-4">
@@ -277,7 +278,7 @@ export default function StudySessionPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xl">
-                You scored {score} out of {initialSessionQuestionCount}.
+                You scored {score} out of {initialSessionQuestionCount} ({sessionAccuracy.toFixed(1)}%).
               </p>
               <div className="flex justify-around text-lg">
                 <div className="flex items-center space-x-2 text-green-600">
