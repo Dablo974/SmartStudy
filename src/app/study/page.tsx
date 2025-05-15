@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; // Spaced repetition intervals in sessions
 
-// Initial set of MCQs (mock data) - only used if localStorage is empty
+// Initial set of MCQs (mock data) - only used if localStorage is empty FOR THE VERY FIRST TIME
 const initialMcqsFromMock: Omit<MCQ, 'nextReviewSession' | 'intervalIndex' | 'lastReviewedSession' | 'timesCorrect' | 'timesIncorrect'>[] = [
   { id: '1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswerIndex: 2, subject: 'Geography', explanation: 'Paris is the capital and most populous city of France.' },
   { id: '2', question: 'Which planet is known as the Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Saturn'], correctAnswerIndex: 1, subject: 'Astronomy', explanation: 'Mars is often called the Red Planet because of its reddish appearance.' },
@@ -43,37 +43,55 @@ export default function StudySessionPage() {
   // Effect for initial loading from localStorage or setting defaults
   useEffect(() => {
     setIsLoading(true);
-    let loadedMcqs: MCQ[] | null = null;
-    try {
-      const storedMcqs = localStorage.getItem(LOCAL_STORAGE_MCQS_KEY);
-      if (storedMcqs) {
-        loadedMcqs = JSON.parse(storedMcqs);
-        // Ensure new fields exist
-        if (Array.isArray(loadedMcqs)) {
-          loadedMcqs = loadedMcqs.map(mcq => ({
-            ...mcq,
-            timesCorrect: mcq.timesCorrect || 0,
-            timesIncorrect: mcq.timesIncorrect || 0,
-          }));
-        }
-      }
-    } catch (e) { console.error("Failed to parse MCQs from localStorage", e); }
+    let mcqsToSet: MCQ[];
 
-    if (loadedMcqs && loadedMcqs.length > 0) {
-      setAllMcqs(loadedMcqs);
-    } else {
-      const initializedMcqs: MCQ[] = initialMcqsFromMock.map((mcq) => ({
+    const storedMcqsString = localStorage.getItem(LOCAL_STORAGE_MCQS_KEY);
+
+    if (storedMcqsString === null) {
+      // No MCQs ever stored (key does not exist). This is the ONLY case to use mock data.
+      mcqsToSet = initialMcqsFromMock.map((mcq) => ({
         ...mcq,
-        nextReviewSession: 1, // Due in the first session
+        nextReviewSession: 1,
         intervalIndex: 0,
         lastReviewedSession: undefined,
         timesCorrect: 0,
         timesIncorrect: 0,
       }));
-      setAllMcqs(initializedMcqs);
-      localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(initializedMcqs));
+      localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(mcqsToSet));
+    } else {
+      // Key exists in localStorage. Use this data, even if it's an empty array or corrupted.
+      try {
+        const parsedMcqs = JSON.parse(storedMcqsString);
+        if (Array.isArray(parsedMcqs)) {
+          mcqsToSet = parsedMcqs.map(mcq => ({ // Ensure all fields are present with defaults
+            id: mcq.id || `migrated-${Date.now()}-${Math.random().toString(36).substring(2,9)}`,
+            question: mcq.question || "Default Question Text",
+            options: Array.isArray(mcq.options) && mcq.options.length === 4 ? mcq.options : ["Opt A", "Opt B", "Opt C", "Opt D"],
+            correctAnswerIndex: typeof mcq.correctAnswerIndex === 'number' ? mcq.correctAnswerIndex : 0,
+            subject: mcq.subject,
+            explanation: mcq.explanation,
+            nextReviewSession: typeof mcq.nextReviewSession === 'number' ? mcq.nextReviewSession : 1,
+            intervalIndex: typeof mcq.intervalIndex === 'number' ? mcq.intervalIndex : 0,
+            lastReviewedSession: mcq.lastReviewedSession,
+            timesCorrect: typeof mcq.timesCorrect === 'number' ? mcq.timesCorrect : 0,
+            timesIncorrect: typeof mcq.timesIncorrect === 'number' ? mcq.timesIncorrect : 0,
+          }));
+        } else {
+          // Data in localStorage under the key is not an array (corrupted). Default to an empty array.
+          console.warn("MCQs in localStorage were not an array. Resetting to empty.");
+          mcqsToSet = [];
+          localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(mcqsToSet)); // Save the corrected empty state
+        }
+      } catch (e) {
+        // JSON parsing error (corrupted). Default to an empty array.
+        console.error("Failed to parse MCQs from localStorage. Resetting to empty.", e);
+        mcqsToSet = [];
+        localStorage.setItem(LOCAL_STORAGE_MCQS_KEY, JSON.stringify(mcqsToSet)); // Save the corrected empty state
+      }
     }
+    setAllMcqs(mcqsToSet);
 
+    // Load session number (existing logic)
     let loadedSessionNumber: number | null = null;
     try {
       const storedSessionNum = localStorage.getItem(LOCAL_STORAGE_SESSION_KEY);
@@ -93,6 +111,7 @@ export default function StudySessionPage() {
     }
     // setIsLoading(false) will be handled by the session setup effect
   }, []);
+
 
   // Effect to save allMcqs to localStorage
   useEffect(() => {
@@ -129,7 +148,7 @@ export default function StudySessionPage() {
       setIsAnswerSubmitted(false);
       prevSessionNumberRef.current = currentSessionNumber;
       setIsLoading(false);
-    } else if (isLoading) {
+    } else if (isLoading) { // Handles the case where allMcqs might have loaded but session number didn't change yet.
       setIsLoading(false);
     }
   }, [allMcqs, currentSessionNumber, isLoading]);
@@ -266,9 +285,9 @@ export default function StudySessionPage() {
   }
 
   const progressPercentage = (initialSessionQuestionCount > 0 ? ((currentQuestionIndex + (isAnswerSubmitted ? 1 : 0)) / initialSessionQuestionCount) * 100 : 0);
+  const sessionAccuracy = initialSessionQuestionCount > 0 ? (score / initialSessionQuestionCount) * 100 : 0;
 
   if (showResults) {
-    const sessionAccuracy = initialSessionQuestionCount > 0 ? (score / initialSessionQuestionCount) * 100 : 0;
     return (
       <AppLayout pageTitle={`Results for Session ${currentSessionNumber}`}>
         <div className="flex flex-col items-center justify-center h-full text-center p-4">
@@ -329,3 +348,4 @@ export default function StudySessionPage() {
     </AppLayout>
   );
 }
+
