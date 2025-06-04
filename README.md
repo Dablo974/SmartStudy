@@ -20,6 +20,38 @@ This is a NextJS application designed as an intelligent MCQ learning platform wi
 
 Les étapes suivantes supposent que vous avez le code de votre projet soit localement, soit sur GitHub.
 
+### A. Méthode Simplifiée avec Scripts (Recommandé)
+
+Des scripts ont été fournis pour simplifier l'installation des dépendances et le lancement de l'application.
+
+**Pour Linux :**
+
+1.  Ouvrez votre terminal.
+2.  Naviguez vers le répertoire racine de votre projet.
+3.  Rendez le script exécutable (seulement la première fois) :
+    ```bash
+    chmod +x install_and_run.sh
+    ```
+4.  Exécutez le script :
+    ```bash
+    ./install_and_run.sh
+    ```
+    Ce script vérifiera les prérequis (Node.js, npm), installera les dépendances (`npm install`) et lancera ensuite l'application (`npm run dev`).
+
+**Pour Windows :**
+
+1.  Ouvrez l'Explorateur de Fichiers et naviguez vers le répertoire racine de votre projet.
+2.  Double-cliquez sur le fichier `install_and_run.bat`.
+    *   Alternativement, ouvrez une Invite de Commandes ou PowerShell, naviguez vers le répertoire du projet, et exécutez :
+        ```bash
+        .\install_and_run.bat
+        ```
+    Ce script vérifiera les prérequis (Node.js, npm), installera les dépendances (`npm install`) et lancera ensuite l'application (`npm run dev`).
+
+Une fois l'application lancée par le script, ouvrez votre navigateur web et allez à `http://localhost:9002`.
+
+### B. Méthode Manuelle
+
 1.  **Ouvrez votre Terminal/Invite de Commandes :**
     *   **Linux :** Ouvrez votre terminal préféré (par exemple, GNOME Terminal, Konsole, xterm, etc.).
     *   **Windows :** Ouvrez l'Invite de Commandes (recherchez `cmd`) ou PowerShell (recherchez `PowerShell`).
@@ -74,9 +106,9 @@ Les étapes suivantes supposent que vous avez le code de votre projet soit local
 *   **Commandes Terminal :** Les commandes `npm` réelles (`npm install`, `npm run dev`, `npm run build`, `npm run start`) sont identiques sur Linux et Windows.
 *   **Variables d'Environnement :** Si votre application utilise ultérieurement des variables d'environnement (par exemple, pour des clés API dans `.env.local`), la manière de définir les variables d'environnement à l'échelle du système diffère entre Linux et Windows, mais la gestion intégrée des variables d'environnement de Next.js (chargement depuis les fichiers `.env*`) fonctionne de manière cohérente sur les deux.
 *   **Chemins de Fichiers :** Soyez conscient des différences de chemins de fichiers (par exemple, `/` sous Linux vs. `\` sous Windows) si vous codez en dur des chemins, mais Node.js et Next.js gèrent généralement bien cela.
-*   **Serveur Genkit :** Votre `package.json` inclut également des scripts comme `genkit:dev`. Ceci est pour exécuter le serveur de développement Genkit, typiquement pour les flux backend liés à l'IA. Il fonctionne indépendamment du serveur frontend Next.js et généralement dans un terminal séparé. Pour simplement "lancer l'application" comme un utilisateur la verrait, `npm run dev` est la commande principale.
+*   **Serveur Genkit :** Votre `package.json` inclut également des scripts comme `genkit:dev`. Ceci est pour exécuter le serveur de développement Genkit, typiquement pour les flux backend liés à l'IA. Il fonctionne indépendamment du serveur frontend Next.js et généralement dans un terminal séparé. Pour simplement "lancer l'application" comme un utilisateur la verrait, `npm run dev` ou les scripts `install_and_run` sont les commandes principales.
 
-**En résumé pour lancer l'application localement :**
+**En résumé pour lancer l'application localement (méthode manuelle) :**
 
 1.  Installez Node.js (qui inclut npm).
 2.  Installez Git (si vous clonez depuis un dépôt).
