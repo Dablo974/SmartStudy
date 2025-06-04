@@ -1,57 +1,87 @@
-# Firebase Studio
 
-This is a NextJS starter in Firebase Studio.
+# SmartStudy Pro - NextJS MCQ Learning Platform
 
-Prerequisites (Same for Linux and Windows)
+This is a NextJS application designed as an intelligent MCQ learning platform with spaced repetition.
 
-Node.js and npm:
-Ensure you have Node.js installed. The LTS (Long-Term Support) version is generally recommended. You can download it from nodejs.org.
-npm (Node Package Manager) is included with Node.js. You can verify installations by opening your terminal/command prompt and typing:
-node -v
-npm -v
-Git:
-If you're cloning the project from GitHub, you'll need Git. Download from git-scm.com.
+## I. Prérequis (Identiques pour Linux et Windows)
 
-II. Getting the App and Running It
+1.  **Node.js et npm :**
+    *   Assurez-vous d'avoir installé Node.js. La version LTS (Long-Term Support) est généralement recommandée. Vous pouvez la télécharger sur [nodejs.org](https://nodejs.org/).
+    *   npm (Node Package Manager) est inclus avec Node.js. Vous pouvez vérifier les installations en ouvrant votre terminal/invite de commandes et en tapant :
+        ```bash
+        node -v
+        npm -v
+        ```
 
-The following steps assume you have your project code either locally or on GitHub.
+2.  **Git :**
+    *   Si vous clonez le projet depuis GitHub (ce qui est recommandé), vous aurez besoin de Git. Téléchargez-le sur [git-scm.com](https://git-scm.com/).
 
-Open Your Terminal/Command Prompt:
+## II. Obtenir l'Application et la Lancer
 
-Linux: Open your preferred terminal (e.g., GNOME Terminal, Konsole, xterm, etc.).
-Windows: Open Command Prompt (search for cmd) or PowerShell (search for PowerShell).
-Navigate to Your Project Directory:
+Les étapes suivantes supposent que vous avez le code de votre projet soit localement, soit sur GitHub.
 
-If you already have the project files locally, just navigate into the project's root folder (the one containing package.json):
-cd path/to/your/project-directory
-Install Dependencies: This command reads your package.json file and downloads all the necessary packages (like Next.js, React, ShadCN components, etc.) into a node_modules folder.
+1.  **Ouvrez votre Terminal/Invite de Commandes :**
+    *   **Linux :** Ouvrez votre terminal préféré (par exemple, GNOME Terminal, Konsole, xterm, etc.).
+    *   **Windows :** Ouvrez l'Invite de Commandes (recherchez `cmd`) ou PowerShell (recherchez `PowerShell`).
 
-npm install
-(If you prefer using yarn or pnpm, you'd use yarn install or pnpm install respectively, assuming you have them installed.)
+2.  **Naviguez vers le Répertoire de Votre Projet :**
+    *   Si vous avez cloné le projet depuis GitHub :
+        ```bash
+        git clone <URL_DE_VOTRE_REPOSITORY_GITHUB>
+        cd <NOM_DE_VOTRE_REPOSITORY>
+        ```
+        (Remplacez `<URL_DE_VOTRE_REPOSITORY_GITHUB>` et `<NOM_DE_VOTRE_REPOSITORY>` par les informations correspondantes.)
+    *   Si vous avez déjà les fichiers du projet localement, naviguez simplement dans le dossier racine du projet (celui contenant `package.json`) :
+        ```bash
+        cd chemin/vers/votre/repertoire-projet
+        ```
 
-Run the App in Development Mode: Your package.json has a dev script: "dev": "next dev --turbopack -p 9002". This command starts the Next.js development server.
+3.  **Installez les Dépendances :**
+    Cette commande lit votre fichier `package.json` et télécharge tous les paquets nécessaires (comme Next.js, React, les composants ShadCN, etc.) dans un dossier `node_modules`.
+    ```bash
+    npm install
+    ```
+    *(Si vous préférez utiliser `yarn` ou `pnpm`, vous utiliseriez `yarn install` ou `pnpm install` respectivement, en supposant que vous les ayez installés.)*
 
-npm run dev
-This will compile your application and start a server, usually on port 9002 as specified in your script.
-You'll see output in the terminal, typically indicating the server is ready, e.g., ready - started server on 0.0.0.0:9002, url: http://localhost:9002.
-Open your web browser and go to http://localhost:9002 to see your app.
-The development server provides features like Hot Module Replacement (HMR), so changes you make to the code will automatically update in the browser.
-Building and Running for Production (Optional, for deployment or testing production build):
+4.  **Lancez l'Application en Mode Développement :**
+    Votre `package.json` contient un script `dev` : `"dev": "next dev --turbopack -p 9002"`. Cette commande démarre le serveur de développement Next.js.
+    ```bash
+    npm run dev
+    ```
+    *   Cela compilera votre application et démarrera un serveur, généralement sur le port `9002` comme spécifié dans votre script.
+    *   Vous verrez une sortie dans le terminal, indiquant typiquement que le serveur est prêt, par exemple : `ready - started server on 0.0.0.0:9002, url: http://localhost:9002`.
+    *   Ouvrez votre navigateur web et allez à `http://localhost:9002` pour voir votre application.
+    *   Le serveur de développement fournit des fonctionnalités comme le Hot Module Replacement (HMR), donc les changements que vous apportez au code se mettront automatiquement à jour dans le navigateur.
 
-a. Build the App: This command creates an optimized production build of your application in the .next folder. bash npm run build
+5.  **Compiler et Lancer pour la Production (Optionnel, pour le déploiement ou tester la version de production) :**
 
-b. Start the Production Server: This command starts a server that serves your optimized production build. bash npm run start * This server usually runs on port 3000 by default, unless configured otherwise in your Next.js settings or via command-line arguments (your start script in package.json is just next start, so it would use the default). * Open your web browser and go to http://localhost:3000 (or the port indicated in the terminal).
+    a.  **Compilez l'Application :**
+        Cette commande crée une version optimisée pour la production de votre application dans le dossier `.next`.
+        ```bash
+        npm run build
+        ```
 
-III. Key Differences & Notes:
+    b.  **Démarrez le Serveur de Production :**
+        Cette commande démarre un serveur qui sert votre version de production optimisée.
+        ```bash
+        npm run start
+        ```
+        *   Ce serveur fonctionne généralement sur le port `3000` par défaut, sauf configuration contraire dans vos paramètres Next.js ou via des arguments en ligne de commande (votre script `start` dans `package.json` est juste `next start`, il utiliserait donc la valeur par défaut).
+        *   Ouvrez votre navigateur web et allez à `http://localhost:3000` (ou le port indiqué dans le terminal).
 
-Terminal Commands: The actual npm commands (npm install, npm run dev, npm run build, npm run start) are identical on both Linux and Windows.
-Environment Variables: If your app later uses environment variables (e.g., for API keys in .env.local), the way you set system-wide environment variables differs between Linux and Windows, but Next.js's built-in environment variable handling (loading from .env* files) works consistently across both.
-File Paths: Be mindful of file path differences (e.g., / in Linux vs. \ in Windows) if you ever hardcode paths, but Node.js and Next.js generally handle this well.
-Genkit Server: Your package.json also includes scripts like genkit:dev. This is for running the Genkit development server, typically for AI-related backend flows. It runs independently of the Next.js frontend server and usually in a separate terminal. To just "launch the app" as a user would see it, npm run dev is the primary command.
-So, in summary:
+## III. Différences Clés & Notes :
 
-Install Node.js.
-Open terminal/cmd.
-Navigate to project folder.
-npm install
-npm run dev (and open http://localhost:9002 in your browser).
+*   **Commandes Terminal :** Les commandes `npm` réelles (`npm install`, `npm run dev`, `npm run build`, `npm run start`) sont identiques sur Linux et Windows.
+*   **Variables d'Environnement :** Si votre application utilise ultérieurement des variables d'environnement (par exemple, pour des clés API dans `.env.local`), la manière de définir les variables d'environnement à l'échelle du système diffère entre Linux et Windows, mais la gestion intégrée des variables d'environnement de Next.js (chargement depuis les fichiers `.env*`) fonctionne de manière cohérente sur les deux.
+*   **Chemins de Fichiers :** Soyez conscient des différences de chemins de fichiers (par exemple, `/` sous Linux vs. `\` sous Windows) si vous codez en dur des chemins, mais Node.js et Next.js gèrent généralement bien cela.
+*   **Serveur Genkit :** Votre `package.json` inclut également des scripts comme `genkit:dev`. Ceci est pour exécuter le serveur de développement Genkit, typiquement pour les flux backend liés à l'IA. Il fonctionne indépendamment du serveur frontend Next.js et généralement dans un terminal séparé. Pour simplement "lancer l'application" comme un utilisateur la verrait, `npm run dev` est la commande principale.
+
+**En résumé pour lancer l'application localement :**
+
+1.  Installez Node.js (qui inclut npm).
+2.  Installez Git (si vous clonez depuis un dépôt).
+3.  Ouvrez votre terminal ou invite de commandes.
+4.  Clonez le projet si nécessaire (`git clone ...`) et naviguez dans son répertoire (`cd ...`).
+5.  Installez les dépendances : `npm install`
+6.  Lancez en mode développement : `npm run dev`
+7.  Ouvrez `http://localhost:9002` (ou le port indiqué) dans votre navigateur web.
