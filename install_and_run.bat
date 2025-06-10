@@ -22,7 +22,7 @@ WHERE node >nul 2>nul
 IF %ERRORLEVEL% NEQ 0 (
     echo ERROR: Node.js could not be found.
     echo Please install Node.js and npm before running this script.
-    echo You can download Node.js (which includes npm) from: https://nodejs.org/
+    echo "You can download Node.js (which includes npm) from: https://nodejs.org/"
     goto :eof
 ) ELSE (
     FOR /F "usebackq delims=" %%F IN (`node -v`) DO (SET "NODE_VERSION=%%F")
@@ -32,9 +32,9 @@ IF %ERRORLEVEL% NEQ 0 (
 REM Check for npm
 WHERE npm >nul 2>nul
 IF %ERRORLEVEL% NEQ 0 (
-    echo ERROR: npm (Node Package Manager) could not be found.
+    echo "ERROR: npm (Node Package Manager) could not be found."
     echo Please install Node.js and npm before running this script.
-    echo You can download Node.js (which includes npm) from: https://nodejs.org/
+    echo "You can download Node.js (which includes npm) from: https://nodejs.org/"
     goto :eof
 ) ELSE (
     FOR /F "usebackq delims=" %%F IN (`npm -v`) DO (SET "NPM_VERSION=%%F")
