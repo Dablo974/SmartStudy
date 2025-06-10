@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, BookOpenText, UploadCloud, Settings, ListChecks } from 'lucide-react';
+import { LayoutDashboard, BookOpenText, UploadCloud, Settings, ListChecks, FilePlus2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -17,6 +17,7 @@ const navItems = [
   { href: '/study', label: 'Study Session', icon: BookOpenText },
   { href: '/upload', label: 'Upload MCQs', icon: UploadCloud },
   { href: '/manage-questions', label: 'Manage Questions', icon: ListChecks },
+  { href: '/create-mcqs', label: 'Create MCQs', icon: FilePlus2 },
   // { href: '/settings', label: 'Settings', icon: Settings }, // Example for future expansion
 ];
 
@@ -48,3 +49,4 @@ export function SidebarNav() {
     </SidebarMenu>
   );
 }
+
