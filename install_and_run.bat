@@ -1,86 +1,131 @@
 @echo off
-REM SmartStudy Pro - Windows Installer & Launcher
-REM -------------------------------------------
-REM This script installs project dependencies and runs the NextJS application
-REM in development mode.
-REM
-REM Prerequisites:
-REM 1. Git: To clone the repository (if you haven't already).
-REM 2. Node.js and npm: This script checks for them but cannot install them.
-REM    Download from https://nodejs.org/
-REM
-REM How to use:
-REM 1. Save this file as "install_and_run.bat" in the root directory of the project.
-REM 2. Open Command Prompt or PowerShell, navigate to the project's root, and run: .\install_and_run.bat
+SETLOCAL ENABLEDELAYEDEXPANSION
+
+REM BatchGotAdmin
+:-------------------------------------
+REM --> Check for permissions
+    IF "%PROCESSOR_ARCHITECTURE%" EQU "amd64" (
+>nul 2>&1 "%SYSTEMROOT%\SysWOW64\cacls.exe" "%SYSTEMROOT%\SysWOW64\config\system"
+) ELSE (
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+)
+
+REM --> If error flag set, we do not have admin.
+if '%errorlevel%' NEQ '0' (
+    echo Requesting administrative privileges...
+    goto UACPrompt
+) else ( goto gotAdmin )
+
+:UACPrompt
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
+    set params = %*:"=""
+    echo UAC.ShellExecute "cmd.exe", "/c ""%~s0"" %params%", "", "runas", 1 >> "%temp%\getadmin.vbs"
+
+    "%temp%\getadmin.vbs"
+    del "%temp%\getadmin.vbs"
+    exit /B
+
+:gotAdmin
+    if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )
+    pushd "%CD%"
+    SET "PUSHD_OLD_CD=%CD%"
+    CD /D "%~dp0"
+:--------------------------------------    
+CLS
 
 echo SmartStudy Pro - Windows Installer ^& Launcher
 echo -------------------------------------------
 echo(
 
 REM Check for Node.js
-WHERE node >nul 2>nul
-IF %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Node.js could not be found.
-    echo Please install Node.js and npm before running this script.
-    echo "You can download Node.js (which includes npm) from: https://nodejs.org/"
-    goto :eof
-) ELSE (
-    FOR /F "usebackq delims=" %%F IN (`node -v`) DO (SET "NODE_VERSION=%%F")
-    echo Node.js found: %NODE_VERSION%
+echo Checking for Node.js...
+SET "NODE_VERSION="
+FOR /F "delims=" %%v IN ('node -v 2^>NUL') DO SET "NODE_VERSION=%%v"
+
+IF "!NODE_VERSION!"=="" (
+    WHERE node >NUL 2>&1
+    IF ERRORLEVEL 1 (
+        GOTO :INSTALL_ERROR_NODE
+    ) ELSE (
+        echo WARNING: Node.js found, but could not determine version. Will attempt to proceed.
+        SET "NODE_VERSION=Unknown (but found)"
+    )
 )
+echo Node.js found: !NODE_VERSION!
 
 REM Check for npm
-WHERE npm >nul 2>nul
-IF %ERRORLEVEL% NEQ 0 (
-    echo "ERROR: npm (Node Package Manager) could not be found."
-    echo Please install Node.js and npm before running this script.
-    echo "You can download Node.js (which includes npm) from: https://nodejs.org/"
-    goto :eof
-) ELSE (
-    FOR /F "usebackq delims=" %%F IN (`npm -v`) DO (SET "NPM_VERSION=%%F")
-    echo npm found: %NPM_VERSION%
+echo Checking for npm...
+SET "NPM_VERSION="
+FOR /F "delims=" %%n IN ('npm -v 2^>NUL') DO SET "NPM_VERSION=%%n"
+
+IF "!NPM_VERSION!"=="" (
+    WHERE npm >NUL 2>&1
+    IF ERRORLEVEL 1 (
+        GOTO :INSTALL_ERROR_NPM
+    ) ELSE (
+        echo WARNING: npm found, but could not determine version. Will attempt to proceed.
+        SET "NPM_VERSION=Unknown (but found)"
+    )
 )
+echo npm found: !NPM_VERSION!
 echo(
 
-REM Navigate to the script's directory (project root)
-REM This ensures npm commands run in the correct context relative to package.json
-cd /D "%~dp0"
+REM Ensure we are in the script's directory (project root)
+REM This might be redundant if UAC part sets it, but good as a fallback.
+echo Navigating to project root: %~dp0
+cd /d "%~dp0"
 
+echo(
 echo Installing project dependencies using 'npm install'...
 echo This might take a few minutes.
 npm install
-IF %ERRORLEVEL% NEQ 0 (
-    echo(
-    echo ERROR: Failed to install project dependencies with 'npm install'.
-    echo Please check the error messages above. You might need to troubleshoot network issues,
-    echo permissions, or missing system libraries like Python or Visual Studio Build Tools (for some native modules).
-    goto :eof
-)
-echo Project dependencies installed successfully.
-echo(
 
-REM Check if next.cmd is installed
+REM The output from npm install (including audit) will be shown.
+REM Now, verify if next.cmd exists as a more reliable check of successful Next.js installation.
+echo(
+echo Verifying Next.js installation...
 IF NOT EXIST "node_modules\.bin\next.cmd" (
     echo(
-    echo ERROR: Next.js executable (next.cmd) not found in node_modules\.bin after installation.
-    echo This might indicate a problem with the 'npm install' process or your npm/Node.js PATH setup.
-    echo Please ensure Next.js is listed as a dependency in your package.json and try again.
-    echo Also, ensure 'node_modules\.bin' is implicitly or explicitly in your PATH when npm commands are run.
-    goto :eof
+    echo ERROR: Next.js command (next.cmd) not found in node_modules\.bin after running 'npm install'.
+    echo This indicates a critical problem with dependency installation.
+    echo Please check the output of 'npm install' above for errors.
+    echo Try deleting the 'node_modules' folder and running this script again.
+    PAUSE
+    GOTO :END_SCRIPT
 )
-echo Next.js executable found.
-echo(
+echo Project dependencies appear to be installed successfully (Next.js command found).
 
+echo(
 echo Starting the SmartStudy Pro application (npm run dev)...
 echo Once started, open your web browser and go to: http://localhost:9002
 echo Press Ctrl+C in this terminal to stop the application.
-npm run dev
+call npm run dev
 
-REM This part is reached if 'npm run dev' is stopped (e.g., by Ctrl+C)
 echo(
 echo SmartStudy Pro application has been stopped.
-echo To run it again, you can use '.\install_and_run.bat'
+echo To run it again, you can use this script 
 echo or directly run 'npm run dev'.
+PAUSE
+GOTO :END_SCRIPT
 
-goto :eof
-REM End of script
+:INSTALL_ERROR_NODE
+echo(
+echo ERROR: Node.js is required to run this application.
+echo Node.js command (node.exe) could not be found or version could not be determined.
+echo Please install Node.js (which includes npm) from: https://nodejs.org/
+PAUSE
+GOTO :END_SCRIPT
+
+:INSTALL_ERROR_NPM
+echo(
+echo ERROR: npm (Node Package Manager) is required. It's usually installed with Node.js.
+echo npm command (npm.cmd) could not be found or version could not be determined.
+echo Please ensure Node.js and npm are correctly installed from: https://nodejs.org/
+PAUSE
+GOTO :END_SCRIPT
+
+:END_SCRIPT
+if defined PUSHD_OLD_CD ( popd )
+echo(
+echo Exiting script.
+ENDLOCAL
