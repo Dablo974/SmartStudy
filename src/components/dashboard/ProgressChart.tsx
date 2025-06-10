@@ -17,6 +17,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+const MAX_TOPICS_TO_DISPLAY = 5;
+
 export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
   const chartData = useMemo(() => {
     return Object.entries(topicMastery)
@@ -24,7 +26,8 @@ export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
         topic: topic,
         mastery: parseFloat(masteryValue.toFixed(1)), // Ensure mastery is a number
       }))
-      .sort((a, b) => b.mastery - a.mastery); // Sort by mastery descending
+      .sort((a, b) => b.mastery - a.mastery) // Sort by mastery descending
+      .slice(0, MAX_TOPICS_TO_DISPLAY); // Display only top N topics
   }, [topicMastery]);
 
   const NoDataDisplay = () => (
@@ -43,8 +46,11 @@ export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Topic Mastery Overview</CardTitle>
-        <CardDescription>Your current mastery level across different topics.</CardDescription>
+        <CardTitle>Top Topic Mastery</CardTitle>
+        <CardDescription>
+          Your mastery level for the top {MAX_TOPICS_TO_DISPLAY} topics.
+          {Object.keys(topicMastery).length > MAX_TOPICS_TO_DISPLAY && " More topics are tracked."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {chartData.length === 0 ? (
@@ -54,7 +60,7 @@ export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
             <BarChart 
               data={chartData} 
               margin={{ top: 5, right: 20, left: -5, bottom: 5 }}
-              layout="vertical" // Change to vertical layout for better topic label readability
+              layout="vertical" 
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} tickLine={false} axisLine={false} tickMargin={8} />
@@ -64,8 +70,8 @@ export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
                 tickLine={false} 
                 axisLine={false} 
                 tickMargin={8} 
-                width={80} // Adjust width for topic labels
-                interval={0} // Show all topic labels
+                width={80} 
+                interval={0} 
               />
               <RechartsTooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
@@ -80,3 +86,4 @@ export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
     </Card>
   );
 }
+

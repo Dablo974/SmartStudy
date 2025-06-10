@@ -13,6 +13,7 @@ import { Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
+const MAX_TOPICS_TO_DISPLAY_LIST = 5;
 
 const initialUserProgress: UserProgress = {
   totalQuestionsStudied: 0,
@@ -99,6 +100,9 @@ export default function DashboardPage() {
     );
   }
 
+  const sortedTopicMastery = Object.entries(userProgress.topicMastery || {})
+    .sort(([, masteryA], [, masteryB]) => masteryB - masteryA);
+
   return (
     <AppLayout pageTitle="Dashboard">
       <div className="space-y-6">
@@ -134,14 +138,16 @@ export default function DashboardPage() {
           </Card>
         </div>
         
-        {userProgress.topicMastery && Object.keys(userProgress.topicMastery).length > 0 && (
+        {sortedTopicMastery.length > 0 && (
           <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-300">
             <CardHeader>
-              <CardTitle>Topic Mastery Details</CardTitle>
+              <CardTitle>Top Topic Mastery Details</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <ul className="space-y-2">
-                {Object.entries(userProgress.topicMastery).map(([topic, mastery], index) => (
+                {sortedTopicMastery
+                  .slice(0, MAX_TOPICS_TO_DISPLAY_LIST)
+                  .map(([topic, mastery], index) => (
                   <li 
                     key={topic} 
                     className="flex justify-between items-center p-2 hover:bg-muted/50 rounded-md animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
@@ -152,6 +158,11 @@ export default function DashboardPage() {
                   </li>
                 ))}
               </ul>
+               {sortedTopicMastery.length > MAX_TOPICS_TO_DISPLAY_LIST && (
+                <p className="text-sm text-muted-foreground mt-3 text-center">
+                  Showing top {MAX_TOPICS_TO_DISPLAY_LIST} of {sortedTopicMastery.length} topics.
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -159,3 +170,4 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
+
