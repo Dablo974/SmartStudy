@@ -78,7 +78,7 @@ cd /d "%~dp0"
 echo(
 echo Installing project dependencies using 'npm install'...
 echo This might take a few minutes.
-npm install
+call npm install
 
 REM The output from npm install (including audit) will be shown.
 REM Now, verify if next.cmd exists as a more reliable check of successful Next.js installation.
