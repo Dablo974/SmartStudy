@@ -26,7 +26,7 @@ export function ProgressChart({ setMastery = {} }: ProgressChartProps) {
         setName: setName, // Use the file/set name for the axis
         mastery: parseFloat(masteryValue.toFixed(1)),
       }))
-      .sort((a, b) => b.mastery - a.mastery) 
+      .sort((a, b) => a.mastery - b.mastery) // Sort by lowest mastery first
       .slice(0, MAX_SETS_TO_DISPLAY_CHART);
   }, [setMastery]);
 
@@ -46,10 +46,10 @@ export function ProgressChart({ setMastery = {} }: ProgressChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top Set Mastery</CardTitle>
+        <CardTitle>Lowest Set Mastery</CardTitle>
         <CardDescription>
-          Your mastery level for the top {MAX_SETS_TO_DISPLAY_CHART} question sets.
-          {Object.keys(setMastery).length > MAX_SETS_TO_DISPLAY_CHART && " More sets are tracked."}
+          Your mastery level for the {chartData.length > 1 ? `bottom ${chartData.length}` : `${chartData.length}`} question set(s). Focus on these areas!
+          {Object.keys(setMastery).length > MAX_SETS_TO_DISPLAY_CHART && ` Showing ${MAX_SETS_TO_DISPLAY_CHART} of ${Object.keys(setMastery).length} tracked sets.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -59,7 +59,7 @@ export function ProgressChart({ setMastery = {} }: ProgressChartProps) {
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <BarChart 
               data={chartData} 
-              margin={{ top: 5, right: 20, left: 5, bottom: 5 }} // Adjusted left margin
+              margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
               layout="vertical" 
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
@@ -70,9 +70,9 @@ export function ProgressChart({ setMastery = {} }: ProgressChartProps) {
                 tickLine={false} 
                 axisLine={false} 
                 tickMargin={8} 
-                width={100} // Increased width to accommodate longer file names
+                width={100} 
                 interval={0} 
-                tickFormatter={(value) => value.length > 15 ? `${value.substring(0,13)}...` : value} // Truncate long names
+                tickFormatter={(value) => value.length > 15 ? `${value.substring(0,13)}...` : value}
               />
               <RechartsTooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}

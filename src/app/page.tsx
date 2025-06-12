@@ -19,7 +19,7 @@ const initialUserProgress: UserProgress = {
   totalQuestionsStudied: 0,
   correctAnswers: 0,
   incorrectAnswers: 0,
-  accuracy: 0,
+  // accuracy: 0, // Accuracy removed
   setMastery: {},
 };
 
@@ -42,8 +42,8 @@ export default function DashboardPage() {
           const totalQuestionsStudied = activeMcqsOverall.filter(q => q.lastReviewedSession !== undefined).length;
           const correctAnswers = activeMcqsOverall.reduce((sum, q) => sum + (q.timesCorrect || 0), 0);
           const incorrectAnswers = activeMcqsOverall.reduce((sum, q) => sum + (q.timesIncorrect || 0), 0);
-          const totalAnsweredOverall = correctAnswers + incorrectAnswers;
-          const accuracy = totalAnsweredOverall > 0 ? (correctAnswers / totalAnsweredOverall) * 100 : 0;
+          // const totalAnsweredOverall = correctAnswers + incorrectAnswers; // Not needed if accuracy is removed
+          // const accuracy = totalAnsweredOverall > 0 ? (correctAnswers / totalAnsweredOverall) * 100 : 0; // Accuracy removed
 
           const setMastery: { [setName: string]: number } = {};
           
@@ -52,15 +52,17 @@ export default function DashboardPage() {
             let questionsInSetTotalAnswered = 0;
             set.mcqs.forEach(mcq => {
               const answeredInThisMcq = (mcq.timesCorrect || 0) + (mcq.timesIncorrect || 0);
-              if (answeredInThisMcq > 0) {
-                questionsInSetTotalAnswered += answeredInThisMcq;
+              if (answeredInThisMcq > 0) { // Only count questions that have been answered at least once
+                questionsInSetTotalAnswered += answeredInThisMcq; // Use total attempts for mastery denominator
                 questionsInSetCorrect += (mcq.timesCorrect || 0);
               }
             });
+            // Calculate mastery only if there are answered questions in the set
             if (questionsInSetTotalAnswered > 0) {
               setMastery[set.fileName] = (questionsInSetCorrect / questionsInSetTotalAnswered) * 100;
             } else {
-              setMastery[set.fileName] = 0;
+              // If no questions answered in the set, mastery is 0 or could be undefined/not shown
+              setMastery[set.fileName] = 0; // Or handle this differently, e.g., not including it
             }
           });
           
@@ -68,18 +70,18 @@ export default function DashboardPage() {
             totalQuestionsStudied,
             correctAnswers,
             incorrectAnswers,
-            accuracy,
+            // accuracy, // Accuracy removed
             setMastery,
           });
         } else {
-          setUserProgress(initialUserProgress); // No active questions overall
+          setUserProgress(initialUserProgress); 
         }
       } else {
-         setUserProgress(initialUserProgress); // No stored MCQ sets
+         setUserProgress(initialUserProgress); 
       }
     } catch (e) {
       console.error("Failed to load or process dashboard data from localStorage", e);
-      setUserProgress(initialUserProgress); // Fallback on error
+      setUserProgress(initialUserProgress); 
     }
     setIsLoading(false);
   }, []);
@@ -97,7 +99,7 @@ export default function DashboardPage() {
   }
 
   const sortedSetMastery = Object.entries(userProgress.setMastery || {})
-    .sort(([, masteryA], [, masteryB]) => masteryB - masteryA);
+    .sort(([, masteryA], [, masteryB]) => masteryA - masteryB); // Sort by lowest mastery first
 
   return (
     <AppLayout pageTitle="Dashboard">
@@ -137,7 +139,7 @@ export default function DashboardPage() {
         {sortedSetMastery.length > 0 && (
           <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-300">
             <CardHeader>
-              <CardTitle>Set Mastery Details</CardTitle>
+              <CardTitle>Set Mastery (Lowest First)</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <ul className="space-y-2">
@@ -150,15 +152,21 @@ export default function DashboardPage() {
                     style={{ animationDelay: `${index * 75 + 400}ms` }}
                   >
                     <span className="font-medium text-foreground truncate max-w-[70%]">{setName}</span>
-                    <span className="text-sm font-semibold text-accent">{mastery.toFixed(1)}%</span>
+                    <span className={cn(
+                        "text-sm font-semibold",
+                        mastery < 33 ? "text-destructive" : mastery < 66 ? "text-orange-500" : "text-green-500" // Example coloring based on mastery
+                      )}>{mastery.toFixed(1)}%</span>
                   </li>
                 ))}
               </ul>
                {sortedSetMastery.length > MAX_SETS_TO_DISPLAY_LIST && (
                 <p className="text-sm text-muted-foreground mt-3 text-center">
-                  Showing top {MAX_SETS_TO_DISPLAY_LIST} of {sortedSetMastery.length} sets.
+                  Showing {MAX_SETS_TO_DISPLAY_LIST} of {sortedSetMastery.length} sets with the lowest mastery.
                 </p>
               )}
+               {sortedSetMastery.length === 0 && (
+                 <p className="text-sm text-muted-foreground text-center py-4">No set mastery data to display yet. Study some questions to see your progress here.</p>
+               )}
             </CardContent>
           </Card>
         )}
