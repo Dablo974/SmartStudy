@@ -126,3 +126,5 @@ Afin de vous faciliter vos révisions je vous conseil de donner votre cours à u
 "fais un qcm en format csv suivant le format suivant: 
 question,option1,option2,option3,option4,correctAnswerIndex,subject,explanation
 Sois le plus exhaustif possible et index les réponses à 1."
+
+Il ne faut pas hésiter à ajouter manuellement des questions si nécessaire.
