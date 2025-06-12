@@ -117,3 +117,12 @@ Une fois l'application lancée par le script, ouvrez votre navigateur web et all
 5.  Installez les dépendances : `npm install`
 6.  Lancez en mode développement : `npm run dev`
 7.  Ouvrez `http://localhost:9002` (ou le port indiqué) dans votre navigateur web.
+
+**Pour créer des qcms :**
+1. Vous pouvez charger un qcm en format csv directement dans l'app
+2. Vous pouvez créer vous même vos qcms dans l'app puis les enrgistrer en .csv
+
+Afin de vous faciliter vos révisions je vous conseil de donner votre cours à un LLM (chat gpt, mistral, gemini ...) avec le prompt suivant:
+"fais un qcm en format csv suivant le format suivant: 
+question,option1,option2,option3,option4,correctAnswerIndex,subject,explanation
+Sois le plus exhaustif possible et index les réponses à 1."
