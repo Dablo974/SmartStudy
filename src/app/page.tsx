@@ -13,14 +13,14 @@ import { Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
-const MAX_TOPICS_TO_DISPLAY_LIST = 5;
+const MAX_SETS_TO_DISPLAY_LIST = 5;
 
 const initialUserProgress: UserProgress = {
   totalQuestionsStudied: 0,
   correctAnswers: 0,
   incorrectAnswers: 0,
   accuracy: 0,
-  topicMastery: {},
+  setMastery: {},
 };
 
 export default function DashboardPage() {
@@ -33,50 +33,46 @@ export default function DashboardPage() {
       const storedMcqSetsString = localStorage.getItem(LOCAL_STORAGE_MCQ_SETS_KEY);
       if (storedMcqSetsString) {
         const allMcqSets: McqSet[] = JSON.parse(storedMcqSetsString);
-        const activeMcqs: MCQ[] = allMcqSets
+        
+        const activeMcqsOverall: MCQ[] = allMcqSets
           .filter(set => set.isActive)
           .reduce((acc, set) => acc.concat(set.mcqs), [] as MCQ[]);
 
-        if (activeMcqs.length > 0) {
-          const totalQuestionsStudied = activeMcqs.filter(q => q.lastReviewedSession !== undefined).length;
-          const correctAnswers = activeMcqs.reduce((sum, q) => sum + (q.timesCorrect || 0), 0);
-          const incorrectAnswers = activeMcqs.reduce((sum, q) => sum + (q.timesIncorrect || 0), 0);
-          const totalAnswered = correctAnswers + incorrectAnswers;
-          const accuracy = totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
+        if (activeMcqsOverall.length > 0) {
+          const totalQuestionsStudied = activeMcqsOverall.filter(q => q.lastReviewedSession !== undefined).length;
+          const correctAnswers = activeMcqsOverall.reduce((sum, q) => sum + (q.timesCorrect || 0), 0);
+          const incorrectAnswers = activeMcqsOverall.reduce((sum, q) => sum + (q.timesIncorrect || 0), 0);
+          const totalAnsweredOverall = correctAnswers + incorrectAnswers;
+          const accuracy = totalAnsweredOverall > 0 ? (correctAnswers / totalAnsweredOverall) * 100 : 0;
 
-          const topicMastery: { [topic: string]: number } = {};
-          const questionsByTopic: { [topic: string]: { total: number, correct: number } } = {};
-
-          activeMcqs.forEach(q => {
-            if (q.subject) {
-              if (!questionsByTopic[q.subject]) {
-                questionsByTopic[q.subject] = { total: 0, correct: 0 };
+          const setMastery: { [setName: string]: number } = {};
+          
+          allMcqSets.filter(set => set.isActive).forEach(set => {
+            let questionsInSetCorrect = 0;
+            let questionsInSetTotalAnswered = 0;
+            set.mcqs.forEach(mcq => {
+              const answeredInThisMcq = (mcq.timesCorrect || 0) + (mcq.timesIncorrect || 0);
+              if (answeredInThisMcq > 0) {
+                questionsInSetTotalAnswered += answeredInThisMcq;
+                questionsInSetCorrect += (mcq.timesCorrect || 0);
               }
-              const answeredInTopic = (q.timesCorrect || 0) + (q.timesIncorrect || 0);
-              if (answeredInTopic > 0) {
-                 questionsByTopic[q.subject].total += answeredInTopic;
-                 questionsByTopic[q.subject].correct += (q.timesCorrect || 0);
-              }
+            });
+            if (questionsInSetTotalAnswered > 0) {
+              setMastery[set.fileName] = (questionsInSetCorrect / questionsInSetTotalAnswered) * 100;
+            } else {
+              setMastery[set.fileName] = 0;
             }
           });
-
-          for (const topic in questionsByTopic) {
-            if (questionsByTopic[topic].total > 0) {
-              topicMastery[topic] = (questionsByTopic[topic].correct / questionsByTopic[topic].total) * 100;
-            } else {
-              topicMastery[topic] = 0; 
-            }
-          }
           
           setUserProgress({
             totalQuestionsStudied,
             correctAnswers,
             incorrectAnswers,
             accuracy,
-            topicMastery,
+            setMastery,
           });
         } else {
-          setUserProgress(initialUserProgress); // No active questions
+          setUserProgress(initialUserProgress); // No active questions overall
         }
       } else {
          setUserProgress(initialUserProgress); // No stored MCQ sets
@@ -100,7 +96,7 @@ export default function DashboardPage() {
     );
   }
 
-  const sortedTopicMastery = Object.entries(userProgress.topicMastery || {})
+  const sortedSetMastery = Object.entries(userProgress.setMastery || {})
     .sort(([, masteryA], [, masteryB]) => masteryB - masteryA);
 
   return (
@@ -111,7 +107,7 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-100">
-            <ProgressChart topicMastery={userProgress.topicMastery || {}} /> 
+            <ProgressChart setMastery={userProgress.setMastery || {}} /> 
           </div>
           <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-200">
             <CardHeader>
@@ -138,29 +134,29 @@ export default function DashboardPage() {
           </Card>
         </div>
         
-        {sortedTopicMastery.length > 0 && (
+        {sortedSetMastery.length > 0 && (
           <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-300">
             <CardHeader>
-              <CardTitle>Top Topic Mastery Details</CardTitle>
+              <CardTitle>Set Mastery Details</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <ul className="space-y-2">
-                {sortedTopicMastery
-                  .slice(0, MAX_TOPICS_TO_DISPLAY_LIST)
-                  .map(([topic, mastery], index) => (
+                {sortedSetMastery
+                  .slice(0, MAX_SETS_TO_DISPLAY_LIST)
+                  .map(([setName, mastery], index) => (
                   <li 
-                    key={topic} 
+                    key={setName} 
                     className="flex justify-between items-center p-2 hover:bg-muted/50 rounded-md animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
                     style={{ animationDelay: `${index * 75 + 400}ms` }}
                   >
-                    <span className="font-medium text-foreground">{topic}</span>
+                    <span className="font-medium text-foreground truncate max-w-[70%]">{setName}</span>
                     <span className="text-sm font-semibold text-accent">{mastery.toFixed(1)}%</span>
                   </li>
                 ))}
               </ul>
-               {sortedTopicMastery.length > MAX_TOPICS_TO_DISPLAY_LIST && (
+               {sortedSetMastery.length > MAX_SETS_TO_DISPLAY_LIST && (
                 <p className="text-sm text-muted-foreground mt-3 text-center">
-                  Showing top {MAX_TOPICS_TO_DISPLAY_LIST} of {sortedTopicMastery.length} topics.
+                  Showing top {MAX_SETS_TO_DISPLAY_LIST} of {sortedSetMastery.length} sets.
                 </p>
               )}
             </CardContent>
@@ -170,4 +166,3 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
-

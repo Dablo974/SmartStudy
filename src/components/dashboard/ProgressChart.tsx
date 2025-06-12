@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useMemo } from 'react';
 
 interface ProgressChartProps {
-  topicMastery?: { [topic: string]: number };
+  setMastery?: { [setName: string]: number };
 }
 
 const chartConfig = {
@@ -17,18 +17,18 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const MAX_TOPICS_TO_DISPLAY = 5;
+const MAX_SETS_TO_DISPLAY_CHART = 5;
 
-export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
+export function ProgressChart({ setMastery = {} }: ProgressChartProps) {
   const chartData = useMemo(() => {
-    return Object.entries(topicMastery)
-      .map(([topic, masteryValue]) => ({
-        topic: topic,
-        mastery: parseFloat(masteryValue.toFixed(1)), // Ensure mastery is a number
+    return Object.entries(setMastery)
+      .map(([setName, masteryValue]) => ({
+        setName: setName, // Use the file/set name for the axis
+        mastery: parseFloat(masteryValue.toFixed(1)),
       }))
-      .sort((a, b) => b.mastery - a.mastery) // Sort by mastery descending
-      .slice(0, MAX_TOPICS_TO_DISPLAY); // Display only top N topics
-  }, [topicMastery]);
+      .sort((a, b) => b.mastery - a.mastery) 
+      .slice(0, MAX_SETS_TO_DISPLAY_CHART);
+  }, [setMastery]);
 
   const NoDataDisplay = () => (
     <div className="flex flex-col items-center justify-center h-[300px] text-center">
@@ -38,18 +38,18 @@ export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
         <path d="M12 16V4"/>
         <path d="M17 16v-3"/>
       </svg>
-      <p className="text-muted-foreground">No topic mastery data available yet.</p>
-      <p className="text-sm text-muted-foreground">Start studying or upload questions to see your progress!</p>
+      <p className="text-muted-foreground">No set mastery data available yet.</p>
+      <p className="text-sm text-muted-foreground">Upload question sets and study to see your progress!</p>
     </div>
   );
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top Topic Mastery</CardTitle>
+        <CardTitle>Top Set Mastery</CardTitle>
         <CardDescription>
-          Your mastery level for the top {MAX_TOPICS_TO_DISPLAY} topics.
-          {Object.keys(topicMastery).length > MAX_TOPICS_TO_DISPLAY && " More topics are tracked."}
+          Your mastery level for the top {MAX_SETS_TO_DISPLAY_CHART} question sets.
+          {Object.keys(setMastery).length > MAX_SETS_TO_DISPLAY_CHART && " More sets are tracked."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -59,19 +59,20 @@ export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <BarChart 
               data={chartData} 
-              margin={{ top: 5, right: 20, left: -5, bottom: 5 }}
+              margin={{ top: 5, right: 20, left: 5, bottom: 5 }} // Adjusted left margin
               layout="vertical" 
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} tickLine={false} axisLine={false} tickMargin={8} />
               <YAxis 
-                dataKey="topic" 
+                dataKey="setName" 
                 type="category" 
                 tickLine={false} 
                 axisLine={false} 
                 tickMargin={8} 
-                width={80} 
+                width={100} // Increased width to accommodate longer file names
                 interval={0} 
+                tickFormatter={(value) => value.length > 15 ? `${value.substring(0,13)}...` : value} // Truncate long names
               />
               <RechartsTooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
@@ -86,4 +87,3 @@ export function ProgressChart({ topicMastery = {} }: ProgressChartProps) {
     </Card>
   );
 }
-

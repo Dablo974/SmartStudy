@@ -28,7 +28,7 @@ export interface UserProgress {
   correctAnswers: number;
   incorrectAnswers: number;
   accuracy: number; // percentage
-  topicMastery?: { [topic: string]: number }; // percentage mastery per topic
+  setMastery?: { [setName: string]: number }; // percentage mastery per set/file
 }
 
 export interface DailyQuestionSet {
