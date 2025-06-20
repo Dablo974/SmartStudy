@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { MCQ } from '@/lib/types';
@@ -7,37 +8,57 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface QuestionDisplayProps {
   question: MCQ;
-  onAnswerSubmit: (isCorrect: boolean, selectedOptionIndex: number) => void;
+  onAnswerSubmit: (isCorrect: boolean, selectedOriginalOptionIndex: number) => void;
   questionNumber: number;
   totalQuestions: number;
 }
 
+interface ShuffledOption {
+  text: string;
+  originalIndex: number;
+}
+
 export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, totalQuestions }: QuestionDisplayProps) {
-  const [selectedOption, setSelectedOption] = useState<string | undefined>(undefined);
+  const [shuffledOptions, setShuffledOptions] = useState<ShuffledOption[]>([]);
+  const [selectedOriginalIndex, setSelectedOriginalIndex] = useState<number | undefined>(undefined);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setSelectedOption(undefined);
-    setIsSubmitted(false);
-    setIsCorrect(null);
-  }, [question]);
+    if (question && question.options) {
+      const optionsWithOriginalIndex = question.options.map((opt, index) => ({
+        text: opt,
+        originalIndex: index,
+      }));
+
+      // Fisher-Yates shuffle algorithm
+      const newShuffledOptions = [...optionsWithOriginalIndex];
+      for (let i = newShuffledOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newShuffledOptions[i], newShuffledOptions[j]] = [newShuffledOptions[j], newShuffledOptions[i]];
+      }
+      setShuffledOptions(newShuffledOptions);
+      
+      // Reset state for new question
+      setSelectedOriginalIndex(undefined);
+      setIsSubmitted(false);
+      setIsCorrect(null);
+    }
+  }, [question]); // Rerun when the question prop (i.e., its content/ID) changes
 
   const handleSubmit = () => {
-    if (selectedOption === undefined) {
-        // Optionally, show a toast or message to select an option
+    if (selectedOriginalIndex === undefined) {
         alert("Please select an option.");
         return;
     }
-    const selectedIndex = question.options.indexOf(selectedOption);
-    const correct = selectedIndex === question.correctAnswerIndex;
+    const correct = selectedOriginalIndex === question.correctAnswerIndex;
     setIsCorrect(correct);
     setIsSubmitted(true);
-    onAnswerSubmit(correct, selectedIndex);
+    onAnswerSubmit(correct, selectedOriginalIndex);
   };
 
   const getOptionLabel = (index: number) => String.fromCharCode(65 + index); // A, B, C, ...
@@ -53,39 +74,40 @@ export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, tota
       </CardHeader>
       <CardContent>
         <RadioGroup
-          value={selectedOption}
-          onValueChange={setSelectedOption}
+          value={selectedOriginalIndex?.toString()} // Value is the originalIndex as a string
+          onValueChange={(value) => setSelectedOriginalIndex(parseInt(value, 10))}
           disabled={isSubmitted}
           className="space-y-3"
         >
-          {question.options.map((option, index) => {
-            const isSelected = selectedOption === option;
-            const isCorrectOption = index === question.correctAnswerIndex;
+          {shuffledOptions.map((optionItem, displayIndex) => {
+            const isSelected = selectedOriginalIndex === optionItem.originalIndex;
+            const isActuallyCorrectOption = optionItem.originalIndex === question.correctAnswerIndex;
+            
             let optionClass = "border-input hover:border-accent";
             if (isSubmitted) {
-              if (isCorrectOption) {
+              if (isActuallyCorrectOption) {
                 optionClass = "border-green-500 bg-green-500/10";
-              } else if (isSelected && !isCorrectOption) {
+              } else if (isSelected && !isActuallyCorrectOption) {
                 optionClass = "border-red-500 bg-red-500/10";
               }
             }
 
             return (
               <Label
-                key={index}
-                htmlFor={`option-${index}`}
+                key={optionItem.originalIndex} // Use originalIndex for a stable key
+                htmlFor={`option-${optionItem.originalIndex}`}
                 className={cn(
                   "flex items-center space-x-3 rounded-md border p-4 transition-all cursor-pointer",
                   optionClass,
-                  isSubmitted && !isCorrectOption && !isSelected ? "opacity-70" : ""
+                  isSubmitted && !isActuallyCorrectOption && !isSelected ? "opacity-70" : ""
                 )}
               >
-                <RadioGroupItem value={option} id={`option-${index}`} className="shrink-0" />
-                <span className="font-medium">{getOptionLabel(index)}.</span>
-                <span>{option}</span>
-                {isSubmitted && isSelected && isCorrectOption && <CheckCircle2 className="ml-auto h-5 w-5 text-green-500" />}
-                {isSubmitted && isSelected && !isCorrectOption && <XCircle className="ml-auto h-5 w-5 text-red-500" />}
-                {isSubmitted && !isSelected && isCorrectOption && <CheckCircle2 className="ml-auto h-5 w-5 text-green-500" />}
+                <RadioGroupItem value={optionItem.originalIndex.toString()} id={`option-${optionItem.originalIndex}`} className="shrink-0" />
+                <span className="font-medium">{getOptionLabel(displayIndex)}.</span>
+                <span>{optionItem.text}</span>
+                {isSubmitted && isSelected && isActuallyCorrectOption && <CheckCircle2 className="ml-auto h-5 w-5 text-green-500" />}
+                {isSubmitted && isSelected && !isActuallyCorrectOption && <XCircle className="ml-auto h-5 w-5 text-red-500" />}
+                {isSubmitted && !isSelected && isActuallyCorrectOption && <CheckCircle2 className="ml-auto h-5 w-5 text-green-500" />}
               </Label>
             );
           })}
@@ -102,10 +124,11 @@ export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, tota
       </CardContent>
       <CardFooter className="flex justify-end">
         {!isSubmitted ? (
-          <Button onClick={handleSubmit} disabled={selectedOption === undefined}>Submit Answer</Button>
+          <Button onClick={handleSubmit} disabled={selectedOriginalIndex === undefined}>Submit Answer</Button>
         ) : (
-          <Button onClick={() => {/* This button will be controlled by parent for "Next Question" */}} variant="outline" className="opacity-0 pointer-events-none">
-             {/* Parent will render the actual Next button */}
+          // This button is visually hidden but helps maintain layout consistency. 
+          // The actual "Next Question" or "View Results" button is rendered by the parent page (StudySessionPage)
+          <Button onClick={() => {}} variant="outline" className="opacity-0 pointer-events-none">
              Placeholder Next
           </Button>
         )}
