@@ -349,6 +349,7 @@ export default function StudySessionPage() {
         <Progress value={progressPercentage} className="w-full max-w-2xl" />
         {sessionQuestions.length > 0 && currentQuestionIndex < sessionQuestions.length && initialSessionQuestionCount > 0 && (
           <QuestionDisplay
+            key={sessionQuestions[currentQuestionIndex].id} 
             question={sessionQuestions[currentQuestionIndex]}
             onAnswerSubmit={handleAnswerSubmit}
             questionNumber={currentQuestionIndex + 1}
