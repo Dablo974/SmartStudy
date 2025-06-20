@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; 
 
