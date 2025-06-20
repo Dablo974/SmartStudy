@@ -2,7 +2,7 @@
 chcp 65001 >nul
 
 echo ------------------------------------------------------------
-echo Si nodejs ou npm ne sont pas installé sur votre machine : https://nodejs.org/
+echo Si nodejs ou npm ne sont pas installé sur votre machine ctrl+click sur le lien: https://nodejs.org/
 echo ------------------------------------------------------------
 
 echo:
