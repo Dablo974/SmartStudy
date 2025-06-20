@@ -4,22 +4,21 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { QuestionDisplay } from '@/components/study/QuestionDisplay';
 import type { MCQ, McqSet } from '@/lib/types';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, XCircle, Zap, CalendarCheck2 } from 'lucide-react';
+import { CheckCircle, XCircle, Zap, CalendarCheck2, TimerIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; 
 
-// localStorage keys
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 const LOCAL_STORAGE_SESSION_KEY = 'smartStudyProCurrentSession';
 
-// Default mock data for the very first run if no sets exist
 const initialMockMcqSet: McqSet = {
   id: 'mock-set-initial',
   fileName: 'Sample Questions',
@@ -32,10 +31,17 @@ const initialMockMcqSet: McqSet = {
   ]
 };
 
+const TIMER_OPTIONS = [
+  { value: 'null', label: 'No Timer' },
+  { value: '15', label: '15 Seconds' },
+  { value: '30', label: '30 Seconds' },
+  { value: '45', label: '45 Seconds' },
+  { value: '60', label: '60 Seconds' },
+];
 
 export default function StudySessionPage() {
   const [allMcqSets, setAllMcqSets] = useState<McqSet[] | null>(null);
-  const [allMcqsFlat, setAllMcqsFlat] = useState<MCQ[]>([]); // Flattened list of MCQs from active sets
+  const [allMcqsFlat, setAllMcqsFlat] = useState<MCQ[]>([]);
   const [sessionQuestions, setSessionQuestions] = useState<MCQ[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [initialSessionQuestionCount, setInitialSessionQuestionCount] = useState(0);
@@ -47,7 +53,11 @@ export default function StudySessionPage() {
   const [currentSessionNumber, setCurrentSessionNumber] = useState<number | null>(null);
   const prevSessionNumberRef = useRef<number | null>(null);
 
-  // Effect for initial loading of McqSets and session number from localStorage
+  const [timerDurationSeconds, setTimerDurationSeconds] = useState<number | null>(null);
+  const [remainingTime, setRemainingTime] = useState<number | null>(null);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const timerIdRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     setIsLoading(true);
     let mcqSetsToUse: McqSet[];
@@ -55,14 +65,12 @@ export default function StudySessionPage() {
     const storedSetsString = localStorage.getItem(LOCAL_STORAGE_MCQ_SETS_KEY);
 
     if (storedSetsString === null) {
-      // No sets ever stored. Use mock data as the first set.
       mcqSetsToUse = [initialMockMcqSet];
       localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(mcqSetsToUse));
     } else {
       try {
         const parsedSets = JSON.parse(storedSetsString);
         if (Array.isArray(parsedSets)) {
-          // Ensure all sets and MCQs have necessary fields with defaults
           mcqSetsToUse = parsedSets.map((set: any) => ({
             id: set.id || `set-${Date.now()}-${Math.random()}`,
             fileName: set.fileName || "Unknown File",
@@ -83,12 +91,10 @@ export default function StudySessionPage() {
             })) : [],
           }));
         } else {
-          console.warn("MCQ sets in localStorage were not an array. Resetting to empty.");
           mcqSetsToUse = []; 
           localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(mcqSetsToUse));
         }
       } catch (e) {
-        console.error("Failed to parse MCQ sets from localStorage. Resetting to empty.", e);
         mcqSetsToUse = [];
         localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(mcqSetsToUse));
       }
@@ -110,21 +116,18 @@ export default function StudySessionPage() {
     }
   }, []);
 
-  // Effect to save allMcqSets to localStorage
   useEffect(() => {
     if (allMcqSets !== null && !isLoading) { 
       localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(allMcqSets));
     }
   }, [allMcqSets, isLoading]);
 
-  // Effect to save currentSessionNumber to localStorage
   useEffect(() => {
     if (currentSessionNumber !== null && !isLoading) {
       localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, currentSessionNumber.toString());
     }
   }, [currentSessionNumber, isLoading]);
 
-  // Effect to flatten active MCQs and set up session questions
   useEffect(() => {
     if (allMcqSets === null || currentSessionNumber === null) {
       setIsLoading(true);
@@ -134,10 +137,8 @@ export default function StudySessionPage() {
     const activeMcqs = allMcqSets
       .filter(set => set.isActive)
       .reduce((acc, set) => acc.concat(set.mcqs), [] as MCQ[]);
-    setAllMcqsFlat(activeMcqs); // Keep allMcqsFlat updated
+    setAllMcqsFlat(activeMcqs);
 
-    // Only reset session state if the session number has actually changed.
-    // prevSessionNumberRef.current starts as null, so this is true for the initial load.
     if (prevSessionNumberRef.current !== currentSessionNumber) {
       setIsLoading(true);
       const dueQuestions = activeMcqs
@@ -146,20 +147,18 @@ export default function StudySessionPage() {
 
       setSessionQuestions(dueQuestions);
       setInitialSessionQuestionCount(dueQuestions.length);
-      setCurrentQuestionIndex(0); // Reset index for the new session
+      setCurrentQuestionIndex(0);
       setScore(0);
       setShowResults(false);
       setIsAnswerSubmitted(false);
-      prevSessionNumberRef.current = currentSessionNumber; // Update the ref to the new current session number
+      prevSessionNumberRef.current = currentSessionNumber;
       setIsLoading(false);
     } else if (isLoading) {
-      // If isLoading was true for other reasons (e.g., initial allMcqSets load) but session didn't change, turn it off.
       setIsLoading(false);
     }
   }, [allMcqSets, currentSessionNumber, isLoading]);
 
-
-  const handleAnswerSubmit = (isCorrect: boolean) => {
+  const handleAnswerSubmit = useCallback((isCorrect: boolean, fromTimeout: boolean = false) => {
     if (!sessionQuestions[currentQuestionIndex] || currentSessionNumber === null || allMcqSets === null) return;
     
     const currentQuestionId = sessionQuestions[currentQuestionIndex].id;
@@ -203,7 +202,13 @@ export default function StudySessionPage() {
       })
     );
     
-    if (isCorrect) {
+    if (fromTimeout) {
+      toast({
+        title: "Time's Up!",
+        description: "The answer was marked as incorrect.",
+        variant: "destructive",
+      });
+    } else if (isCorrect) {
       setScore(prev => prev + 1);
       toast({
         title: "Correct!",
@@ -219,7 +224,50 @@ export default function StudySessionPage() {
       });
     }
     setIsAnswerSubmitted(true);
-  };
+  }, [sessionQuestions, currentQuestionIndex, currentSessionNumber, allMcqSets, toast]);
+
+
+  useEffect(() => {
+    if (timerIdRef.current) {
+      clearInterval(timerIdRef.current);
+      timerIdRef.current = null;
+    }
+
+    if (timerDurationSeconds && sessionQuestions.length > 0 && currentQuestionIndex < sessionQuestions.length && !isAnswerSubmitted && !showResults) {
+      setIsTimerActive(true);
+      setRemainingTime(timerDurationSeconds);
+
+      timerIdRef.current = setInterval(() => {
+        setRemainingTime(prevTime => {
+          if (prevTime === null) {
+            clearInterval(timerIdRef.current!);
+            timerIdRef.current = null;
+            setIsTimerActive(false);
+            return null;
+          }
+          if (prevTime <= 1) {
+            clearInterval(timerIdRef.current!);
+            timerIdRef.current = null;
+            setIsTimerActive(false);
+            handleAnswerSubmit(false, true); 
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
+    } else {
+      setIsTimerActive(false);
+      setRemainingTime(null);
+    }
+
+    return () => {
+      if (timerIdRef.current) {
+        clearInterval(timerIdRef.current);
+        timerIdRef.current = null;
+      }
+    };
+  }, [currentQuestionIndex, timerDurationSeconds, isAnswerSubmitted, sessionQuestions, showResults, handleAnswerSubmit]);
+
 
   const handleNextQuestion = () => {
     setIsAnswerSubmitted(false);
@@ -231,9 +279,9 @@ export default function StudySessionPage() {
   };
 
   const restartSession = () => {
-     if (allMcqsFlat === null || currentSessionNumber === null) return;
-    setIsLoading(true); // Set loading true before re-filtering
-     const dueQuestions = allMcqsFlat // Use allMcqsFlat which should be up-to-date
+    if (allMcqsFlat === null || currentSessionNumber === null) return;
+    setIsLoading(true);
+    const dueQuestions = allMcqsFlat
       .filter(q => q.nextReviewSession <= currentSessionNumber)
       .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
     setSessionQuestions(dueQuestions);
@@ -242,14 +290,12 @@ export default function StudySessionPage() {
     setScore(0);
     setShowResults(false);
     setIsAnswerSubmitted(false);
-    setIsLoading(false); // Set loading false after setup
+    setIsLoading(false);
   };
 
   const handleStartNextSession = () => {
-    // prevSessionNumberRef will be updated by the useEffect when currentSessionNumber changes
     setCurrentSessionNumber(prev => (prev ? prev + 1 : 1)); 
   };
-
 
   if (isLoading || allMcqSets === null || currentSessionNumber === null) {
     return (
@@ -265,10 +311,31 @@ export default function StudySessionPage() {
     );
   }
   
+  const isTimerSelectDisabled = isLoading || showResults || (sessionQuestions.length > 0 && (currentQuestionIndex > 0 || isAnswerSubmitted));
+
   if (initialSessionQuestionCount === 0 && !showResults && !isLoading) {
     return (
       <AppLayout pageTitle={`Study Session ${currentSessionNumber}`}>
-        <div className="flex flex-col items-center justify-center h-full text-center p-6">
+        <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-4">
+           <div className="mb-4">
+              <Label htmlFor="timer-select-empty" className="mr-2 text-sm font-medium text-muted-foreground">Question Timer:</Label>
+              <Select
+                value={timerDurationSeconds === null ? 'null' : timerDurationSeconds.toString()}
+                onValueChange={(value) => {
+                  setTimerDurationSeconds(value === 'null' ? null : parseInt(value, 10));
+                }}
+                disabled={isTimerSelectDisabled}
+              >
+                <SelectTrigger id="timer-select-empty" className="w-[180px] inline-flex">
+                  <SelectValue placeholder="Set timer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMER_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
            <Card className="w-full max-w-md shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
             <CardHeader>
               <CardTitle className="text-2xl flex items-center justify-center gap-2">
@@ -346,14 +413,39 @@ export default function StudySessionPage() {
   return (
     <AppLayout pageTitle={isLoading ? "Study Session" : `Study Session ${currentSessionNumber}`}>
       <div className="flex flex-col items-center space-y-6">
-        <Progress value={progressPercentage} className="w-full max-w-2xl" />
+        <div className="w-full max-w-2xl flex flex-col sm:flex-row justify-between items-center mb-2 gap-4">
+          <div className="flex-grow w-full sm:w-auto">
+             <Progress value={progressPercentage} className="w-full" />
+          </div>
+          <div className="flex items-center gap-2">
+            <TimerIcon className="h-5 w-5 text-muted-foreground" />
+            <Select
+                value={timerDurationSeconds === null ? 'null' : timerDurationSeconds.toString()}
+                onValueChange={(value) => {
+                  setTimerDurationSeconds(value === 'null' ? null : parseInt(value, 10));
+                }}
+                disabled={isTimerSelectDisabled}
+              >
+                <SelectTrigger className="w-[150px] text-sm h-9">
+                  <SelectValue placeholder="Set timer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMER_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-sm">{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+          </div>
+        </div>
+
         {sessionQuestions.length > 0 && currentQuestionIndex < sessionQuestions.length && initialSessionQuestionCount > 0 && (
           <QuestionDisplay
             key={sessionQuestions[currentQuestionIndex].id} 
             question={sessionQuestions[currentQuestionIndex]}
-            onAnswerSubmit={handleAnswerSubmit}
+            onAnswerSubmit={(isCorrect) => handleAnswerSubmit(isCorrect, false)}
             questionNumber={currentQuestionIndex + 1}
             totalQuestions={initialSessionQuestionCount}
+            remainingTime={remainingTime}
           />
         )}
         {isAnswerSubmitted && (
