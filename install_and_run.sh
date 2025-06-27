@@ -52,6 +52,15 @@ echo ""
 # This ensures npm commands run in the correct context
 cd "$(dirname "$0")" || exit
 
+# Check for .env.local file
+if [ ! -f ".env.local" ]; then
+    echo "WARNING: .env.local file not found."
+    echo "The AI features will not work without a GOOGLE_API_KEY."
+    echo "Please create a .env.local file with your API key."
+    echo "Example: GOOGLE_API_KEY=your_api_key_here"
+    echo ""
+fi
+
 # Install dependencies
 echo "Installing project dependencies using 'npm install'..."
 echo "This might take a few minutes."
