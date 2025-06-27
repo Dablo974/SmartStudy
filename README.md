@@ -76,7 +76,7 @@ Une fois l'application lancée par le script, ouvrez votre navigateur web et all
     *(Si vous préférez utiliser `yarn` ou `pnpm`, vous utiliseriez `yarn install` ou `pnpm install` respectivement, en supposant que vous les ayez installés.)*
 
 4.  **Lancez l'Application en Mode Développement :**
-    Votre `package.json` contient un script `dev` : `"dev": "next dev --turbopack -p 9002"`. Cette commande démarre le serveur de développement Next.js.
+    Votre `package.json` contient un script `dev` : `"dev": "next dev -p 9002"`. Cette commande démarre le serveur de développement Next.js.
     ```bash
     npm run dev
     ```
@@ -108,19 +108,29 @@ Une fois l'application lancée par le script, ouvrez votre navigateur web et all
 *   **Chemins de Fichiers :** Soyez conscient des différences de chemins de fichiers (par exemple, `/` sous Linux vs. `\` sous Windows) si vous codez en dur des chemins, mais Node.js et Next.js gèrent généralement bien cela.
 *   **Serveur Genkit :** Votre `package.json` inclut également des scripts comme `genkit:dev`. Ceci est pour exécuter le serveur de développement Genkit, typiquement pour les flux backend liés à l'IA. Il fonctionne indépendamment du serveur frontend Next.js et généralement dans un terminal séparé. Pour simplement "lancer l'application" comme un utilisateur la verrait, `npm run dev` ou les scripts `install_and_run` sont les commandes principales.
 
-**En résumé pour lancer l'application localement (méthode manuelle) :**
+## IV. Configuration des Clés API (Important pour la Sécurité)
 
-1.  Installez Node.js (qui inclut npm).
-2.  Installez Git (si vous clonez depuis un dépôt).
-3.  Ouvrez votre terminal ou invite de commandes.
-4.  Clonez le projet si nécessaire (`git clone ...`) et naviguez dans son répertoire (`cd ...`).
-5.  Installez les dépendances : `npm install`
-6.  Lancez en mode développement : `npm run dev`
-7.  Ouvrez `http://localhost:9002` (ou le port indiqué) dans votre navigateur web.
+L'application utilise l'API Google Gemini pour les fonctionnalités d'intelligence artificielle. Pour que cela fonctionne, vous devez fournir votre propre clé API.
 
-**Pour créer des qcms :**
+**Votre clé API est SÉCURISÉE.** Elle est utilisée uniquement sur le serveur et n'est jamais exposée au navigateur de l'utilisateur.
+
+Pour configurer votre clé pour le développement local :
+
+1.  **Créez un fichier `.env.local`** à la racine de votre projet (au même niveau que `package.json`). Ce fichier est ignoré par Git et ne sera donc jamais partagé.
+
+2.  **Ajoutez votre clé API** dans ce fichier comme ceci :
+    ```
+    GOOGLE_API_KEY=VOTRE_CLE_API_GEMINI_ICI
+    ```
+    (Remplacez `VOTRE_CLE_API_GEMINI_ICI` par la clé que vous avez obtenue depuis [Google AI Studio](https://aistudio.google.com/app/apikey)).
+
+3.  **Redémarrez votre serveur de développement** (`npm run dev`) pour que Next.js prenne en compte la nouvelle variable d'environnement.
+
+## V. Création de QCMs
+
 1. Vous pouvez charger un qcm en format csv directement dans l'app
 2. Vous pouvez créer vous même vos qcms dans l'app puis les enrgistrer en .csv
+3. Vous pouvez générer des QCMs via l'IA en téléversant un cours au format PDF.
 
 Afin de vous faciliter vos révisions je vous conseil de donner votre cours à un LLM (chat gpt, mistral, gemini ...) avec le prompt suivant:
 "fais un qcm en format csv suivant le format suivant: 
