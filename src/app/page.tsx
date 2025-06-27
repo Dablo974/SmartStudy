@@ -11,20 +11,24 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
 import { SetMasteryDetails } from '@/components/dashboard/SetMasteryDetails';
-import { MasteryLegend } from '@/components/dashboard/MasteryLegend';
+import { MasteryDistributionChart } from '@/components/dashboard/MasteryDistributionChart';
+import { masteryLevels } from '@/lib/mastery';
 import { cn } from '@/lib/utils';
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
+const LOCAL_STORAGE_SESSION_KEY = 'smartStudyProCurrentSession';
 
 const initialUserProgress: UserProgress = {
   totalQuestionsStudied: 0,
   correctAnswers: 0,
   incorrectAnswers: 0,
   setMastery: {},
+  questionsDue: 0,
 };
 
 export default function DashboardPage() {
   const [userProgress, setUserProgress] = useState<UserProgress>(initialUserProgress);
+  const [masteryDistribution, setMasteryDistribution] = useState<any[]>([]);
   const [allMcqSets, setAllMcqSets] = useState<McqSet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,6 +36,10 @@ export default function DashboardPage() {
     setIsLoading(true);
     try {
       const storedMcqSetsString = localStorage.getItem(LOCAL_STORAGE_MCQ_SETS_KEY);
+      
+      const storedSessionNumString = localStorage.getItem(LOCAL_STORAGE_SESSION_KEY);
+      const currentSessionNumber = storedSessionNumString ? parseInt(storedSessionNumString, 10) : 1;
+
       if (storedMcqSetsString) {
         const loadedMcqSets: McqSet[] = JSON.parse(storedMcqSetsString);
         setAllMcqSets(loadedMcqSets);
@@ -44,6 +52,7 @@ export default function DashboardPage() {
           const totalQuestionsStudied = activeMcqsOverall.filter(q => q.lastReviewedSession !== undefined).length;
           const correctAnswers = activeMcqsOverall.reduce((sum, q) => sum + (q.timesCorrect || 0), 0);
           const incorrectAnswers = activeMcqsOverall.reduce((sum, q) => sum + (q.timesIncorrect || 0), 0);
+          const questionsDue = activeMcqsOverall.filter(q => q.nextReviewSession <= currentSessionNumber).length;
           
           const setMastery: { [setName: string]: number } = {};
           
@@ -64,23 +73,34 @@ export default function DashboardPage() {
             }
           });
           
+          const distribution = masteryLevels.map((level, index) => {
+            const count = activeMcqsOverall.filter(mcq => mcq.intervalIndex === index).length;
+            return { ...level, count };
+          }).filter(d => d.count > 0);
+
+          setMasteryDistribution(distribution);
+
           setUserProgress({
             totalQuestionsStudied,
             correctAnswers,
             incorrectAnswers,
             setMastery,
+            questionsDue,
           });
         } else {
           setUserProgress(initialUserProgress); 
+          setMasteryDistribution([]);
         }
       } else {
          setUserProgress(initialUserProgress); 
          setAllMcqSets([]);
+         setMasteryDistribution([]);
       }
     } catch (e) {
       console.error("Failed to load or process dashboard data from localStorage", e);
       setUserProgress(initialUserProgress); 
       setAllMcqSets([]);
+      setMasteryDistribution([]);
     }
     setIsLoading(false);
   }, []);
@@ -152,8 +172,8 @@ export default function DashboardPage() {
               "animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-400",
               allMcqSets.length === 0 && "lg:col-span-2"
             )}>
-              <MasteryLegend />
-            </div>
+            <MasteryDistributionChart data={masteryDistribution} />
+          </div>
         </div>
 
       </div>
