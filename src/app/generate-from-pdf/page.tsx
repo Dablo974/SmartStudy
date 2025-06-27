@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import pdf from 'pdf-parse';
 
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -19,12 +18,6 @@ import { generateMcqsFromText } from '@/ai/flows/generate-mcqs-from-text-flow';
 import { Loader2, Wand2, Trash2, Download, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
-
-// For browser usage, we need to specify the worker source for pdf.js
-// @ts-ignore
-if (typeof window !== 'undefined') {
-  pdf.PDFJS.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdf.PDFJS.version}/pdf.worker.min.js`;
-}
 
 const formSchema = z.object({
   pdfFile: typeof window === 'undefined'
@@ -63,6 +56,13 @@ export default function GenerateFromPdfPage() {
     setIsGenerating(false);
 
     try {
+      // Dynamically import pdf-parse to ensure it's only loaded on the client
+      const pdf = (await import('pdf-parse')).default;
+
+      // For browser usage, we need to specify the worker source for pdf.js
+      // @ts-ignore
+      pdf.PDFJS.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdf.PDFJS.version}/pdf.worker.min.js`;
+      
       const buffer = await file.arrayBuffer();
       const pdfData = await pdf(Buffer.from(buffer));
       const courseText = pdfData.text;
