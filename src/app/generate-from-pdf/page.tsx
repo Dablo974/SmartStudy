@@ -59,7 +59,7 @@ export default function GenerateFromPdfPage() {
       // Dynamically import pdfjs-dist and its worker
       const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
       // Use a CDN for the worker to avoid bundling issues
-      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.mjs`;
 
       const buffer = await file.arrayBuffer();
       const loadingTask = pdfjs.getDocument({ data: buffer });
