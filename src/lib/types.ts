@@ -27,7 +27,6 @@ export interface UserProgress {
   totalQuestionsStudied: number;
   correctAnswers: number;
   incorrectAnswers: number;
-  accuracy: number; // percentage
   setMastery?: { [setName: string]: number }; // percentage mastery per set/file
 }
 
