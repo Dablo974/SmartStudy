@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, BookOpenText, UploadCloud, ListChecks, FilePlus2, Wand2 } from 'lucide-react';
+import { LayoutDashboard, BookOpenText, UploadCloud, ListChecks, FilePlus2, Wand2, HelpCircle } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/manage-questions', label: 'Manage Questions', icon: ListChecks },
   { href: '/create-mcqs', label: 'Create MCQs', icon: FilePlus2 },
   { href: '/generate-from-pdf', label: 'Generate with AI', icon: Wand2 },
+  { href: '/tutorial', label: 'Tutoriel', icon: HelpCircle },
 ];
 
 export function SidebarNav() {
