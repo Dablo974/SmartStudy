@@ -382,12 +382,12 @@ export default function StudySessionPage() {
             <CardHeader>
               <CardTitle className="text-2xl flex items-center justify-center gap-2">
                 <CalendarCheck2 className="w-8 h-8 text-green-500" />
-                All Caught Up for Session {currentSessionNumber}!
+                Excellent ! Session {currentSessionNumber} maîtrisée !
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-lg text-muted-foreground">
-                There are no questions from active sets due for study in this session. Great job staying on top of your reviews!
+                Il n'y a aucune question à réviser. Vous pouvez faire une pause ou, si vous le souhaitez, passer directement à la session suivante.
               </p>
               <Button onClick={handleStartNextSession} className="w-full">
                 Start Next Session (Session {currentSessionNumber + 1})
@@ -499,5 +499,6 @@ export default function StudySessionPage() {
     </AppLayout>
   );
 }
+
 
 
