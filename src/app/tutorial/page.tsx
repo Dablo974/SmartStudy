@@ -2,8 +2,9 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { LayoutDashboard, BookOpenText, UploadCloud, ListChecks, FilePlus2, Wand2, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, BookOpenText, UploadCloud, ListChecks, FilePlus2, Wand2 } from 'lucide-react';
 import Link from 'next/link';
+import { Logo } from '@/components/icons/Logo';
 
 const features = [
   {
@@ -51,7 +52,7 @@ export default function TutorialPage() {
         <Card className="w-full max-w-4xl shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
-              <HelpCircle className="h-8 w-8 text-accent" />
+              <Logo className="h-8 w-8" />
               Bienvenue sur SmartStudy Pro !
             </CardTitle>
             <CardDescription>
