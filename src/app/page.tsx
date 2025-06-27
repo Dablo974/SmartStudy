@@ -5,7 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PerformanceSummary } from '@/components/dashboard/PerformanceSummary';
 import { ProgressChart } from '@/components/dashboard/ProgressChart';
 import type { UserProgress, MCQ, McqSet } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
