@@ -11,6 +11,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
 import { SetMasteryDetails } from '@/components/dashboard/SetMasteryDetails';
+import { MasteryLegend } from '@/components/dashboard/MasteryLegend';
+import { cn } from '@/lib/utils';
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 
@@ -133,17 +135,27 @@ export default function DashboardPage() {
           </Card>
         </div>
         
-        {allMcqSets.length > 0 && (
-          <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-300">
-            <CardHeader>
-              <CardTitle>Set Mastery (Lowest First)</CardTitle>
-              <CardDescription>Click on a set to see question-level mastery.</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-                <SetMasteryDetails sets={allMcqSets.filter(s => s.isActive)} sortedMastery={sortedSetMastery} />
-            </CardContent>
-          </Card>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {allMcqSets.length > 0 && (
+            <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-300">
+              <CardHeader>
+                <CardTitle>Set Mastery (Lowest First)</CardTitle>
+                <CardDescription>Click on a set to see question-level mastery.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-2">
+                  <SetMasteryDetails sets={allMcqSets.filter(s => s.isActive)} sortedMastery={sortedSetMastery} />
+              </CardContent>
+            </Card>
+          )}
+
+          <div className={cn(
+              "animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-400",
+              allMcqSets.length === 0 && "lg:col-span-2"
+            )}>
+              <MasteryLegend />
+            </div>
+        </div>
+
       </div>
     </AppLayout>
   );
