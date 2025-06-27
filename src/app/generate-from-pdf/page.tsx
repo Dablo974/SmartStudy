@@ -56,16 +56,24 @@ export default function GenerateFromPdfPage() {
     setIsGenerating(false);
 
     try {
-      // Dynamically import pdf-parse to ensure it's only loaded on the client
-      const pdf = (await import('pdf-parse')).default;
+      // Dynamically import pdfjs-dist and its worker
+      const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
+      // Use a CDN for the worker to avoid bundling issues
+      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-      // For browser usage, we need to specify the worker source for pdf.js
-      // @ts-ignore
-      pdf.PDFJS.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdf.PDFJS.version}/pdf.worker.min.js`;
-      
       const buffer = await file.arrayBuffer();
-      const pdfData = await pdf(buffer);
-      const courseText = pdfData.text;
+      const loadingTask = pdfjs.getDocument({ data: buffer });
+      const pdfDoc = await loadingTask.promise;
+      
+      let fullText = '';
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+          const page = await pdfDoc.getPage(i);
+          const textContent = await page.getTextContent();
+          // The type for item is TextItem, but we can use any for simplicity here
+          const pageText = textContent.items.map((item: any) => item.str).join(' ');
+          fullText += pageText + '\n';
+      }
+      const courseText = fullText;
 
       if (!courseText.trim()) {
         toast({ title: 'PDF Content Empty', description: 'Could not extract any text from the PDF.', variant: 'destructive' });
