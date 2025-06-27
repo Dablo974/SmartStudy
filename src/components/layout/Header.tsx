@@ -1,3 +1,4 @@
+
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { StreakDisplay } from '@/components/gamification/StreakDisplay';
 
 interface HeaderProps {
   title: string;
@@ -23,6 +25,7 @@ export function Header({ title }: HeaderProps) {
         <h1 className="text-xl font-semibold text-foreground">{title}</h1>
       </div>
       <div className="flex items-center gap-4">
+        <StreakDisplay />
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

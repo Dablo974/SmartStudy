@@ -34,3 +34,9 @@ export interface DailyQuestionSet {
   date: string; // ISO date string
   questions: MCQ[];
 }
+
+export interface GamificationStats {
+  currentStreak: number;
+  longestStreak: number;
+  lastSessionDate: string; // ISO Date string 'YYYY-MM-DD'
+}

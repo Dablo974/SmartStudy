@@ -3,7 +3,7 @@
 
 import { AppLayout } from '@/components/layout/AppLayout';
 import { QuestionDisplay } from '@/components/study/QuestionDisplay';
-import type { MCQ, McqSet } from '@/lib/types';
+import type { MCQ, McqSet, GamificationStats } from '@/lib/types';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,8 @@ const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8];
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 const LOCAL_STORAGE_SESSION_KEY = 'smartStudyProCurrentSession';
+const LOCAL_STORAGE_GAMIFICATION_KEY = 'smartStudyProGamificationStats';
+
 
 const initialMockMcqSet: McqSet = {
   id: 'mock-set-initial',
@@ -310,6 +312,50 @@ export default function StudySessionPage() {
     };
   }, [currentQuestionIndex, timerDurationSeconds, isAnswerSubmitted, sessionQuestions, showResults, handleAnswerSubmit]);
 
+  // Gamification: Update streak on viewing results
+  useEffect(() => {
+    if (showResults) {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+
+      const storedStatsString = localStorage.getItem(LOCAL_STORAGE_GAMIFICATION_KEY);
+      let stats: GamificationStats;
+
+      if (storedStatsString) {
+        try {
+          stats = JSON.parse(storedStatsString);
+        } catch (e) {
+          stats = { currentStreak: 0, longestStreak: 0, lastSessionDate: '' };
+        }
+      } else {
+        stats = { currentStreak: 0, longestStreak: 0, lastSessionDate: '' };
+      }
+
+      if (stats.lastSessionDate !== todayStr) {
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        if (stats.lastSessionDate === yesterdayStr) {
+          // Consecutive day
+          stats.currentStreak += 1;
+        } else {
+          // Not a consecutive day, reset streak to 1
+          stats.currentStreak = 1;
+        }
+
+        stats.lastSessionDate = todayStr;
+
+        if (stats.currentStreak > stats.longestStreak) {
+          stats.longestStreak = stats.currentStreak;
+        }
+
+        localStorage.setItem(LOCAL_STORAGE_GAMIFICATION_KEY, JSON.stringify(stats));
+        // Dispatch a custom event so other components (like the header) can react to the change
+        window.dispatchEvent(new CustomEvent('gamificationUpdate'));
+      }
+    }
+  }, [showResults]);
 
   const handleNextQuestion = () => {
     setIsAnswerSubmitted(false);
@@ -499,6 +545,3 @@ export default function StudySessionPage() {
     </AppLayout>
   );
 }
-
-
-
