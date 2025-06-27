@@ -141,20 +141,61 @@ export default function StudySessionPage() {
     setAllMcqsFlat(activeMcqs);
 
     if (prevSessionNumberRef.current !== currentSessionNumber) {
-      setIsLoading(true);
+      setIsLoading(true); // Always start loading when we intend to change the session
+
       const dueQuestions = activeMcqs
         .filter(q => q.nextReviewSession <= currentSessionNumber)
         .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
 
-      setSessionQuestions(dueQuestions);
-      setInitialSessionQuestionCount(dueQuestions.length);
-      setCurrentQuestionIndex(0);
-      setScore(0);
-      setShowResults(false);
-      setIsAnswerSubmitted(false);
-      prevSessionNumberRef.current = currentSessionNumber;
-      setIsLoading(false);
+      if (dueQuestions.length > 0) {
+        // We found questions for this session number. Load the session.
+        setSessionQuestions(dueQuestions);
+        setInitialSessionQuestionCount(dueQuestions.length);
+        setCurrentQuestionIndex(0);
+        setScore(0);
+        setShowResults(false);
+        setIsAnswerSubmitted(false);
+        prevSessionNumberRef.current = currentSessionNumber;
+        setIsLoading(false);
+      } else {
+        // No questions due for the current session.
+        if (activeMcqs.length > 0) {
+          const futureSessionNumbers = activeMcqs
+            .map(q => q.nextReviewSession)
+            .filter(sessionNum => sessionNum > currentSessionNumber);
+
+          if (futureSessionNumbers.length > 0) {
+            // There are questions in a future session. Jump to the next available one.
+            const nextAvailableSession = Math.min(...futureSessionNumbers);
+            // This will cause the effect to re-run with the new session number.
+            // We leave isLoading=true to show the loading state during the jump.
+            setCurrentSessionNumber(nextAvailableSession);
+          } else {
+            // No questions due now, and no questions scheduled for the future.
+            // This is the "All caught up" state. Load an empty session.
+            setSessionQuestions([]);
+            setInitialSessionQuestionCount(0);
+            setCurrentQuestionIndex(0);
+            setScore(0);
+            setShowResults(false);
+            setIsAnswerSubmitted(false);
+            prevSessionNumberRef.current = currentSessionNumber;
+            setIsLoading(false);
+          }
+        } else {
+          // There are no active questions at all. Load an empty session.
+          setSessionQuestions([]);
+          setInitialSessionQuestionCount(0);
+          setCurrentQuestionIndex(0);
+          setScore(0);
+          setShowResults(false);
+          setIsAnswerSubmitted(false);
+          prevSessionNumberRef.current = currentSessionNumber;
+          setIsLoading(false);
+        }
+      }
     } else if (isLoading) {
+      // This handles cases where the effect re-runs but the session number hasn't changed.
       setIsLoading(false);
     }
   }, [allMcqSets, currentSessionNumber, isLoading]);
@@ -458,4 +499,5 @@ export default function StudySessionPage() {
     </AppLayout>
   );
 }
+
 
