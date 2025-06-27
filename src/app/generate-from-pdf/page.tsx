@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { MCQ, McqSet } from '@/lib/types';
 import type { GeneratedMcq } from '@/ai/flows/generate-mcqs-from-text-flow';
 import { generateMcqsFromText } from '@/ai/flows/generate-mcqs-from-text-flow';
-import { Loader2, Wand2, Trash2, Download, RotateCcw } from 'lucide-react';
+import { Loader2, Wand2, Save, Download, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
@@ -99,6 +99,48 @@ export default function GenerateFromPdfPage() {
       setIsParsing(false);
       setIsGenerating(false);
     }
+  };
+
+  const convertToCSV = (mcqs: GeneratedMcq[]): string => {
+    const header = "question,option1,option2,option3,option4,correctAnswerIndex,subject,explanation\n";
+    const rows = mcqs.map(mcq => {
+      const options = mcq.options.map(opt => `"${opt.replace(/"/g, '""')}"`).join(',');
+      const question = `"${mcq.question.replace(/"/g, '""')}"`;
+      const subject = mcq.subject ? `"${mcq.subject.replace(/"/g, '""')}"` : '';
+      const explanation = mcq.explanation ? `"${mcq.explanation.replace(/"/g, '""')}"` : '';
+      return `${question},${options},${mcq.correctAnswerIndex},${subject},${explanation}`;
+    });
+    return header + rows.join('\n');
+  };
+
+  const handleExportToCSV = () => {
+    if (generatedMcqs.length === 0) {
+      toast({
+        title: "Cannot Export Empty Set",
+        description: "Please generate some MCQs before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const csvString = convertToCSV(generatedMcqs);
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    const downloadFileName = fileName 
+        ? `AI-MCQs-from-${fileName.replace(/\.pdf$/i, '')}.csv` 
+        : `smartstudy_ai_mcqs_${new Date().toISOString().slice(0,10)}.csv`;
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", downloadFileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({
+      title: "Export Successful",
+      description: `Set of ${generatedMcqs.length} MCQ(s) downloaded as CSV.`,
+    });
   };
   
   const handleSaveSet = () => {
@@ -202,8 +244,11 @@ export default function GenerateFromPdfPage() {
                 <Button variant="outline" size="sm" onClick={handleClear} disabled={isLoading || generatedMcqs.length === 0}>
                   <RotateCcw className="mr-1 h-4 w-4" /> Clear
                 </Button>
+                <Button variant="outline" size="sm" onClick={handleExportToCSV} disabled={isLoading || generatedMcqs.length === 0}>
+                  <Download className="mr-1 h-4 w-4" /> Export CSV
+                </Button>
                 <Button size="sm" onClick={handleSaveSet} disabled={isLoading || generatedMcqs.length === 0}>
-                  <Download className="mr-1 h-4 w-4" /> Save Set
+                  <Save className="mr-1 h-4 w-4" /> Save Set
                 </Button>
               </div>
             </div>
