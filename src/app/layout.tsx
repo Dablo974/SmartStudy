@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
-import { GeistSans } from 'geist/font/sans'; // Corrected import path
-import { GeistMono } from 'geist/font/mono'; // Corrected import path
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from '@/components/layout/ThemeProvider';
 
-const geistSans = GeistSans; // Directly use the font object
-const geistMono = GeistMono; // Directly use the font object
+const geistSans = GeistSans;
+const geistMono = GeistMono;
 
 export const metadata: Metadata = {
   title: 'SmartStudy Pro',
@@ -20,8 +21,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
           <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
