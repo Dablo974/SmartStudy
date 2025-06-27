@@ -64,7 +64,7 @@ export default function GenerateFromPdfPage() {
       pdf.PDFJS.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdf.PDFJS.version}/pdf.worker.min.js`;
       
       const buffer = await file.arrayBuffer();
-      const pdfData = await pdf(Buffer.from(buffer));
+      const pdfData = await pdf(buffer);
       const courseText = pdfData.text;
 
       if (!courseText.trim()) {
