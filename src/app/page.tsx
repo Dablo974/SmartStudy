@@ -118,19 +118,19 @@ export default function DashboardPage() {
               <p className="text-muted-foreground">
                 Ready for your next session? Jump in and keep learning!
               </p>
-              <Link href="/study" passHref>
-                <Button size="lg" className="w-full max-w-xs">
+              <Button asChild size="lg" className="w-full max-w-xs">
+                <Link href="/study">
                   Start Study Session
-                </Button>
-              </Link>
+                </Link>
+              </Button>
                <p className="text-sm text-muted-foreground pt-4">
                 Or, manage your question sets and upload more.
               </p>
-              <Link href="/manage-questions" passHref>
-                <Button variant="outline" size="lg" className="w-full max-w-xs">
+              <Button asChild variant="outline" size="lg" className="w-full max-w-xs">
+                <Link href="/manage-questions">
                   Manage Questions
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>

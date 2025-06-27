@@ -117,9 +117,9 @@ export default function ManageQuestionsPage() {
             </p>
           </CardContent>
            <CardFooter>
-             <Link href="/upload" passHref>
-              <Button>Upload Your First Set</Button>
-            </Link>
+             <Button asChild>
+              <Link href="/upload">Upload Your First Set</Link>
+            </Button>
            </CardFooter>
         </Card>
       ) : (

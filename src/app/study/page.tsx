@@ -438,16 +438,16 @@ export default function StudySessionPage() {
               <Button onClick={handleStartNextSession} className="w-full">
                 Start Next Session (Session {currentSessionNumber + 1})
               </Button>
-              <Link href="/manage-questions" passHref>
-                <Button variant="outline" className="w-full mt-2">
+              <Button asChild variant="outline" className="w-full mt-2">
+                <Link href="/manage-questions">
                   Manage Question Sets
-                </Button>
-              </Link>
-              <Link href="/" passHref>
-                <Button variant="outline" className="w-full mt-2">
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full mt-2">
+                <Link href="/">
                   Back to Dashboard
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -485,11 +485,11 @@ export default function StudySessionPage() {
                 <Button onClick={handleStartNextSession} className="w-full mt-2">
                    Start Next Session (Session {currentSessionNumber + 1})
                 </Button>
-                <Link href="/" passHref>
-                  <Button variant="outline" className="w-full mt-2">
+                <Button asChild variant="outline" className="w-full mt-2">
+                  <Link href="/">
                     Back to Dashboard
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
