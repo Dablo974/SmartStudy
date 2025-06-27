@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { SessionSummary } from '@/components/study/SessionSummary';
 
 const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; 
 
@@ -46,6 +47,7 @@ export default function StudySessionPage() {
   const [allMcqSets, setAllMcqSets] = useState<McqSet[] | null>(null);
   const [allMcqsFlat, setAllMcqsFlat] = useState<MCQ[]>([]);
   const [sessionQuestions, setSessionQuestions] = useState<MCQ[]>([]);
+  const [sessionInitialState, setSessionInitialState] = useState<MCQ[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [initialSessionQuestionCount, setInitialSessionQuestionCount] = useState(0);
   const [score, setScore] = useState(0);
@@ -151,6 +153,7 @@ export default function StudySessionPage() {
 
       if (dueQuestions.length > 0) {
         // We found questions for this session number. Load the session.
+        setSessionInitialState(JSON.parse(JSON.stringify(dueQuestions))); // Deep copy for initial state
         setSessionQuestions(dueQuestions);
         setInitialSessionQuestionCount(dueQuestions.length);
         setCurrentQuestionIndex(0);
@@ -175,6 +178,7 @@ export default function StudySessionPage() {
           } else {
             // No questions due now, and no questions scheduled for the future.
             // This is the "All caught up" state. Load an empty session.
+            setSessionInitialState([]);
             setSessionQuestions([]);
             setInitialSessionQuestionCount(0);
             setCurrentQuestionIndex(0);
@@ -186,6 +190,7 @@ export default function StudySessionPage() {
           }
         } else {
           // There are no active questions at all. Load an empty session.
+          setSessionInitialState([]);
           setSessionQuestions([]);
           setInitialSessionQuestionCount(0);
           setCurrentQuestionIndex(0);
@@ -372,6 +377,7 @@ export default function StudySessionPage() {
     const dueQuestions = allMcqsFlat
       .filter(q => q.nextReviewSession <= currentSessionNumber)
       .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
+    setSessionInitialState(JSON.parse(JSON.stringify(dueQuestions))); // Re-capture initial state
     setSessionQuestions(dueQuestions);
     setInitialSessionQuestionCount(dueQuestions.length);
     setCurrentQuestionIndex(0);
@@ -459,6 +465,15 @@ export default function StudySessionPage() {
   const sessionAccuracy = initialSessionQuestionCount > 0 ? (score / initialSessionQuestionCount) * 100 : 0;
 
   if (showResults) {
+    // Find the final state of the questions from the master list
+    const finalSessionState = sessionInitialState.map(initialQ => {
+        for (const set of allMcqSets || []) {
+            const finalQ = set.mcqs.find(mcq => mcq.id === initialQ.id);
+            if (finalQ) return finalQ;
+        }
+        return initialQ; // Fallback
+    });
+
     return (
       <AppLayout pageTitle={`Results for Session ${currentSessionNumber}`}>
         <div className="flex flex-col items-center justify-center h-full text-center p-4">
@@ -493,6 +508,9 @@ export default function StudySessionPage() {
               </div>
             </CardContent>
           </Card>
+
+          <SessionSummary initialQuestions={sessionInitialState} finalQuestions={finalSessionState} />
+
         </div>
       </AppLayout>
     );
