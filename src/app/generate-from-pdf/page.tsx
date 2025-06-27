@@ -15,9 +15,10 @@ import { useToast } from '@/hooks/use-toast';
 import type { MCQ, McqSet } from '@/lib/types';
 import type { GeneratedMcq } from '@/ai/flows/generate-mcqs-from-text-flow';
 import { generateMcqsFromText } from '@/ai/flows/generate-mcqs-from-text-flow';
-import { Loader2, Wand2, Save, Download, RotateCcw } from 'lucide-react';
+import { Loader2, Wand2, Save, Download, RotateCcw, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const formSchema = z.object({
   pdfFile: typeof window === 'undefined'
@@ -202,6 +203,13 @@ export default function GenerateFromPdfPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handlePdfUpload)}>
               <CardContent>
+                <Alert className="mb-6">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Veuillez vérifier le contenu</AlertTitle>
+                    <AlertDescription>
+                    Les questions générées par l'IA peuvent contenir des inexactitudes. Nous vous encourageons à toujours vérifier les questions et les réponses avant de les utiliser pour vos études.
+                    </AlertDescription>
+                </Alert>
                 <FormField
                   control={form.control}
                   name="pdfFile"
