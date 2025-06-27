@@ -14,6 +14,7 @@ import { SetMasteryDetails } from '@/components/dashboard/SetMasteryDetails';
 import { MasteryDistributionChart } from '@/components/dashboard/MasteryDistributionChart';
 import { masteryLevels } from '@/lib/mastery';
 import { cn } from '@/lib/utils';
+import { MasteryLegend } from '@/components/dashboard/MasteryLegend';
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 const LOCAL_STORAGE_SESSION_KEY = 'smartStudyProCurrentSession';
@@ -176,6 +177,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-500">
+          <MasteryLegend />
+        </div>
       </div>
     </AppLayout>
   );
