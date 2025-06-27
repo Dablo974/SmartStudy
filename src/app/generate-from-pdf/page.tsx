@@ -95,7 +95,15 @@ export default function GenerateFromPdfPage() {
 
     } catch (error: any) {
       console.error("Error during PDF parsing or AI generation:", error);
-      toast({ title: 'An Error Occurred', description: error.message || 'Failed to process the PDF and generate questions.', variant: 'destructive' });
+      if (error.message && typeof error.message === 'string' && error.message.toLowerCase().includes('rate limit')) {
+        toast({
+          title: 'Too Many Requests',
+          description: 'You have exceeded the API rate limit. Please wait a moment and try again.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({ title: 'An Error Occurred', description: error.message || 'Failed to process the PDF and generate questions.', variant: 'destructive' });
+      }
     } finally {
       setIsParsing(false);
       setIsGenerating(false);
