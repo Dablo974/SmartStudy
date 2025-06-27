@@ -52,13 +52,27 @@ echo ""
 # This ensures npm commands run in the correct context
 cd "$(dirname "$0")" || exit
 
-# Check for .env.local file
-if [ ! -f ".env.local" ]; then
-    echo "WARNING: .env.local file not found."
-    echo "The AI features will not work without a GOOGLE_API_KEY."
-    echo "Please create a .env.local file with your API key."
-    echo "Example: GOOGLE_API_KEY=your_api_key_here"
-    echo ""
+# Check for .env.local file and API key
+API_KEY_PRESENT=false
+if [ -f ".env.local" ]; then
+    if grep -q "^GOOGLE_API_KEY=" .env.local; then
+        API_KEY_PRESENT=true
+        echo "✓ API key found in .env.local."
+    fi
+fi
+
+if [ "$API_KEY_PRESENT" = false ]; then
+    echo "WARNING: GOOGLE_API_KEY not found."
+    echo "The AI features will not work without it."
+    read -p "Please enter your Google Gemini API Key and press [Enter]: " GOOGLE_API_KEY
+    if [ -n "$GOOGLE_API_KEY" ]; then
+        echo "GOOGLE_API_KEY=$GOOGLE_API_KEY" > .env.local
+        echo "✓ API Key saved to .env.local for future use."
+        echo ""
+    else
+        echo "No API Key provided. AI features will be disabled."
+        echo ""
+    fi
 fi
 
 # Install dependencies

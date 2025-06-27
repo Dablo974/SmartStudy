@@ -36,7 +36,6 @@ Des scripts ont été fournis pour simplifier l'installation des dépendances et
     ```bash
     ./install_and_run.sh
     ```
-    Ce script vérifiera les prérequis (Node.js, npm), vous rappellera de créer le fichier `.env.local` si nécessaire, installera les dépendances (`npm install`) et lancera ensuite l'application (`npm run dev`).
 
 **Pour Windows :**
 
@@ -46,7 +45,9 @@ Des scripts ont été fournis pour simplifier l'installation des dépendances et
         ```bash
         .\install_and_run.bat
         ```
-    Ce script vérifiera les prérequis (Node.js, npm), vous rappellera de créer le fichier `.env.local` si nécessaire, installera les dépendances (`npm install`) et lancera ensuite l'application (`npm run dev`).
+
+**Configuration de la clé API :**
+La première fois que vous lancerez le script, il vérifiera s'il a besoin d'une clé API pour les fonctionnalités d'IA. Si c'est le cas, il vous invitera à la saisir directement dans le terminal. La clé sera sauvegardée en toute sécurité dans un fichier `.env.local` pour les utilisations futures.
 
 Une fois l'application lancée par le script, ouvrez votre navigateur web et allez à `http://localhost:9002`.
 
@@ -54,30 +55,13 @@ Une fois l'application lancée par le script, ouvrez votre navigateur web et all
 
 Si vous préférez ne pas utiliser les scripts, vous pouvez suivre ces étapes.
 
-1.  **Ouvrez votre Terminal/Invite de Commandes :**
-    *   **Linux :** Ouvrez votre terminal préféré.
-    *   **Windows :** Ouvrez l'Invite de Commandes ou PowerShell.
-
-2.  **Naviguez vers le Répertoire de Votre Projet :**
-    *   Si vous avez cloné le projet depuis GitHub :
-        ```bash
-        git clone <URL_DE_VOTRE_REPOSITORY_GITHUB>
-        cd <NOM_DE_VOTRE_REPOSITORY>
-        ```
-    *   Si vous avez déjà les fichiers, naviguez simplement dans le dossier racine du projet.
-        ```bash
-        cd chemin/vers/votre/repertoire-projet
-        ```
-
-3.  **Installez les Dépendances :**
+1.  **Ouvrez votre Terminal/Invite de Commandes.**
+2.  **Naviguez vers le Répertoire du Projet.**
+3.  **Configurez votre Clé API (Étape cruciale)** : Créez un fichier nommé `.env.local` à la racine du projet et ajoutez votre clé API Google Gemini. (Voir la section `IV. Configuration des Clés API` ci-dessous pour les détails).
+4.  **Installez les Dépendances :**
     ```bash
     npm install
     ```
-
-4.  **Configurez votre Clé API (Étape cruciale)**
-    *   Avant de lancer l'application, créez un fichier nommé `.env.local` à la racine du projet.
-    *   Ajoutez votre clé API Google Gemini dans ce fichier. (Voir la section `IV. Configuration des Clés API` ci-dessous pour les détails).
-
 5.  **Lancez l'Application en Mode Développement :**
     ```bash
     npm run dev
@@ -88,25 +72,22 @@ Si vous préférez ne pas utiliser les scripts, vous pouvez suivre ces étapes.
 
 *   **Commandes Terminal :** Les commandes `npm` réelles (`npm install`, `npm run dev`) sont identiques sur Linux et Windows.
 *   **Variables d'Environnement :** L'utilisation d'un fichier `.env.local` est la méthode standard et fonctionne de manière identique sur tous les systèmes d'exploitation avec Next.js. Vous n'avez pas besoin d'utiliser la commande `export` ou `set` dans votre terminal.
-*   **Serveur Genkit :** Pour simplement lancer l'application, `npm run dev` ou les scripts `install_and_run` sont les commandes principales.
 
 ## IV. Configuration des Clés API (Important pour la Sécurité)
 
-L'application utilise l'API Google Gemini pour les fonctionnalités d'intelligence artificielle. Pour que cela fonctionne, vous devez fournir votre propre clé API.
+L'application utilise l'API Google Gemini pour les fonctionnalités d'intelligence artificielle.
 
 **Votre clé API est SÉCURISÉE.** Elle est utilisée uniquement sur le serveur et n'est jamais exposée au navigateur de l'utilisateur.
 
-Pour configurer votre clé pour le développement local :
+Pour configurer votre clé pour le développement local, la méthode la plus simple est d'utiliser les scripts de lancement (`install_and_run.sh` ou `install_and_run.bat`). Si la clé n'est pas configurée, le script vous demandera de la saisir et la sauvegardera pour vous dans un fichier `.env.local`.
 
-1.  **Créez un fichier `.env.local`** à la racine de votre projet (au même niveau que `package.json`). Ce fichier est ignoré par Git et ne sera donc jamais partagé.
+Ce fichier `.env.local` est ignoré par Git et ne sera donc jamais partagé. Il contiendra une ligne comme celle-ci :
+```
+GOOGLE_API_KEY=VOTRE_CLE_API_GEMINI_ICI
+```
+(Remplacez `VOTRE_CLE_API_GEMINI_ICI` par la clé que vous avez obtenue depuis [Google AI Studio](https://aistudio.google.com/app/apikey)).
 
-2.  **Ajoutez votre clé API** dans ce fichier comme ceci :
-    ```
-    GOOGLE_API_KEY=VOTRE_CLE_API_GEMINI_ICI
-    ```
-    (Remplacez `VOTRE_CLE_API_GEMINI_ICI` par la clé que vous avez obtenue depuis [Google AI Studio](https://aistudio.google.com/app/apikey)).
-
-3.  **Redémarrez votre serveur de développement** (`npm run dev` ou en utilisant les scripts) pour que Next.js prenne en compte la nouvelle variable d'environnement.
+Une fois le fichier créé, redémarrez votre serveur de développement pour que Next.js prenne en compte la nouvelle variable d'environnement.
 
 ## V. Création de QCMs
 
