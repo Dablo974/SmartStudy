@@ -37,7 +37,7 @@ const generateMcqsPrompt = ai.definePrompt({
   name: 'generateMcqsPrompt',
   input: { schema: z.object({ courseText: z.string() }) },
   output: { schema: GenerateMcqsOutputSchema },
-  prompt: `You are an expert educator and exam creator. Your task is to generate a comprehensive set of 10 multiple-choice questions (MCQs) based on the provided text.
+  prompt: `You are an expert educator and exam creator. Your task is to generate a comprehensive set of multiple-choice questions (MCQs) based on the provided text. The number of questions should be appropriate for the length and information density of the text. For a short text, 5 questions might be enough. For a detailed, multi-page document, 15-20 questions would be more suitable. Use your judgment to create a thorough and relevant quiz that covers the key concepts.
 
 For each MCQ, you must provide:
 1.  A clear and concise question that tests a key concept from the text.
