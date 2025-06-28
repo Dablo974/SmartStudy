@@ -2,7 +2,7 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { LayoutDashboard, BookOpenText, UploadCloud, ListChecks, FilePlus2, Wand2 } from 'lucide-react';
+import { LayoutDashboard, BookOpenText, UploadCloud, ListChecks, FilePlus2, Wand2, ClipboardCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/icons/Logo';
 
@@ -10,53 +10,59 @@ const features = [
   {
     icon: LayoutDashboard,
     title: 'Dashboard',
-    description: "Votre tableau de bord personnel. Suivez vos progrès, visualisez votre maîtrise par matière et accédez rapidement à votre prochaine session d'étude.",
+    description: "Your personal control center. Track your progress, view your mastery by subject, and quickly access your next study session.",
     link: '/'
   },
   {
     icon: BookOpenText,
-    title: 'Session d\'étude',
-    description: "Le cœur de l'application. Répondez aux questions dues pour votre session. Le système de répétition espacée calcule automatiquement quand vous devriez revoir chaque question pour une mémorisation optimale.",
+    title: 'Study Session',
+    description: "The heart of the app. Answer the questions due for your session. The spaced repetition system automatically calculates when you should review each question for optimal memorization.",
     link: '/study'
   },
   {
-    icon: UploadCloud,
-    title: 'Téléverser des QCM',
-    description: "Importez vos propres lots de questions au format CSV. Idéal pour ajouter rapidement des QCM préparés à l'avance ou partagés par d'autres.",
-    link: '/upload'
+    icon: ClipboardCheck,
+    title: 'Exam Mode',
+    description: "Test your knowledge under exam conditions. This mode includes all your active questions in a timed or untimed test, without affecting your spaced repetition progress.",
+    link: '/exam-mode'
   },
   {
     icon: ListChecks,
-    title: 'Gérer les questions',
-    description: "Activez ou désactivez les lots de questions pour vos sessions d'étude, ou supprimez les lots dont vous n'avez plus besoin.",
+    title: 'Manage Questions',
+    description: "Activate or deactivate question sets for your study sessions, or delete sets you no longer need.",
     link: '/manage-questions'
   },
   {
+    icon: UploadCloud,
+    title: 'Upload MCQs',
+    description: "Import your own sets of questions in CSV format. Ideal for quickly adding pre-made or shared MCQ sets.",
+    link: '/upload'
+  },
+  {
     icon: FilePlus2,
-    title: 'Créer des QCM',
-    description: "Créez vos propres questions une par une grâce à un formulaire simple. Vous pouvez ensuite les exporter au format CSV.",
+    title: 'Create MCQs',
+    description: "Create your own questions one by one with a simple form. You can then export them to CSV format.",
     link: '/create-mcqs'
   },
   {
     icon: Wand2,
-    title: 'Générer avec l\'IA',
-    description: "Téléversez vos supports de cours au format PDF et laissez l'IA générer automatiquement un lot de QCM pertinents pour vous faire gagner du temps.",
+    title: 'Generate with AI',
+    description: "Upload your course materials in PDF format and let the AI automatically generate a relevant set of MCQs to save you time.",
     link: '/generate-from-pdf'
   }
 ];
 
 export default function TutorialPage() {
   return (
-    <AppLayout pageTitle="Tutoriel">
+    <AppLayout pageTitle="Tutorial">
       <div className="flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
         <Card className="w-full max-w-4xl shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
               <Logo className="h-8 w-8" />
-              Bienvenue sur SmartStudy Pro !
+              Welcome to SmartStudy Pro!
             </CardTitle>
             <CardDescription>
-              Ce guide vous présente les fonctionnalités clés de l'application pour vous aider à démarrer.
+              This guide introduces the key features of the application to help you get started.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -75,7 +81,7 @@ export default function TutorialPage() {
                         {feature.description}
                       </p>
                       <Link href={feature.link} className="text-sm font-semibold text-accent hover:underline">
-                        Aller à la page {feature.title} &rarr;
+                        Go to the {feature.title} page &rarr;
                       </Link>
                     </div>
                   </AccordionContent>

@@ -21,8 +21,8 @@ export function SessionSummary({ initialQuestions, finalQuestions }: SessionSumm
   return (
     <Card className="w-full max-w-lg mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-100">
       <CardHeader>
-        <CardTitle>Récapitulatif de la Session</CardTitle>
-        <CardDescription>Voici l'évolution de votre maîtrise pour cette session.</CardDescription>
+        <CardTitle>Session Summary</CardTitle>
+        <CardDescription>Here is your mastery progress for this session.</CardDescription>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[250px] pr-4">

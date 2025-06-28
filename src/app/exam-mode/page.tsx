@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -25,11 +26,11 @@ import {
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 const TIMER_OPTIONS = [
-  { value: '15', label: '15 Secondes' },
-  { value: '30', label: '30 Secondes' },
-  { value: '45', label: '45 Secondes' },
-  { value: '60', label: '60 Secondes' },
-  { value: 'null', label: 'Pas de minuteur' },
+  { value: '15', label: '15 Seconds' },
+  { value: '30', label: '30 Seconds' },
+  { value: '45', label: '45 Seconds' },
+  { value: '60', label: '60 Seconds' },
+  { value: 'null', label: 'No Timer' },
 ];
 
 const shuffleArray = (array: any[]) => {
@@ -148,10 +149,10 @@ export default function ExamModePage() {
 
   if (isLoading) {
     return (
-      <AppLayout pageTitle="Mode Examen">
+      <AppLayout pageTitle="Exam Mode">
         <div className="flex flex-col items-center justify-center h-full text-center">
           <Loader2 className="w-16 h-16 text-accent mb-4 animate-spin" />
-          <h2 className="text-2xl font-semibold mb-2">Chargement des questions...</h2>
+          <h2 className="text-2xl font-semibold mb-2">Loading questions...</h2>
         </div>
       </AppLayout>
     );
@@ -159,15 +160,15 @@ export default function ExamModePage() {
 
   if (showResultsScreen) {
     return (
-      <AppLayout pageTitle="Résultats de l'Examen">
+      <AppLayout pageTitle="Exam Results">
         <div className="max-w-4xl mx-auto">
           <Card className="shadow-xl animate-in fade-in">
             <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2"><BarChart/>Résultats de l'examen</CardTitle>
-              <CardDescription>Vous avez terminé l'examen. Voici votre performance.</CardDescription>
+              <CardTitle className="text-2xl flex items-center gap-2"><BarChart/>Exam Results</CardTitle>
+              <CardDescription>You have completed the exam. Here is your performance.</CardDescription>
             </CardHeader>
             <CardContent className="text-center space-y-4">
-              <p className="text-3xl font-bold">Votre score : {score} / {examQuestions.length}</p>
+              <p className="text-3xl font-bold">Your score: {score} / {examQuestions.length}</p>
               <div className="flex justify-around text-lg">
                 <div className="flex items-center space-x-2 text-green-600 font-semibold">
                   <CheckCircle /> <span>{score} Correct</span>
@@ -179,17 +180,17 @@ export default function ExamModePage() {
             </CardContent>
             <CardFooter className="flex-col gap-4">
               <Button onClick={handleResetExam} className="w-full max-w-sm">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Revenir à la configuration
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Setup
               </Button>
                <Button asChild variant="outline" className="w-full max-w-sm">
-                  <Link href="/">Retour au tableau de bord</Link>
+                  <Link href="/">Back to Dashboard</Link>
                 </Button>
             </CardFooter>
           </Card>
 
           <Card className="mt-6 shadow-xl animate-in fade-in delay-100">
             <CardHeader>
-              <CardTitle>Révision des réponses</CardTitle>
+              <CardTitle>Review Answers</CardTitle>
             </CardHeader>
             <CardContent>
                 <ScrollArea className="h-[400px] pr-4">
@@ -198,8 +199,8 @@ export default function ExamModePage() {
                             <li key={question.id} className="p-3 rounded-md bg-muted/50 border-l-4" style={{ borderLeftColor: isCorrect ? 'hsl(var(--chart-4))' : 'hsl(var(--destructive))' }}>
                                 <p className="font-medium">{index + 1}. {question.question}</p>
                                 <div className="text-xs mt-2">
-                                    <p>Votre réponse : <span className={cn(isCorrect ? "text-green-600" : "text-red-600")}>{userAnswerIndex !== null ? question.options[userAnswerIndex] : "Pas de réponse (temps écoulé)"}</span></p>
-                                    {!isCorrect && <p>Réponse correcte : <span className="text-green-600">{question.options[question.correctAnswerIndex]}</span></p>}
+                                    <p>Your answer: <span className={cn(isCorrect ? "text-green-600" : "text-red-600")}>{userAnswerIndex !== null ? question.options[userAnswerIndex] : "No answer (timed out)"}</span></p>
+                                    {!isCorrect && <p>Correct answer: <span className="text-green-600">{question.options[question.correctAnswerIndex]}</span></p>}
                                 </div>
                             </li>
                         ))}
@@ -214,26 +215,26 @@ export default function ExamModePage() {
 
   if (!isExamStarted) {
     return (
-      <AppLayout pageTitle="Mode Examen">
+      <AppLayout pageTitle="Exam Mode">
         <div className="flex justify-center">
           <Card className="w-full max-w-lg shadow-xl animate-in fade-in">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><ClipboardCheck/>Configuration de l'Examen</CardTitle>
-              <CardDescription>Préparez-vous à tester vos connaissances. Toutes les questions actives seront incluses.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><ClipboardCheck/>Exam Setup</CardTitle>
+              <CardDescription>Prepare to test your knowledge. All active questions will be included.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between rounded-lg border p-4">
-                <p className="font-medium">Nombre total de questions</p>
+                <p className="font-medium">Total number of questions</p>
                 <p className="text-2xl font-bold text-accent">{allMcqs.length}</p>
               </div>
               <div className="flex items-center justify-between">
-                <label htmlFor="timer-select" className="font-medium">Minuteur par question</label>
+                <label htmlFor="timer-select" className="font-medium">Timer per question</label>
                 <Select
                   value={timerDurationSeconds === null ? 'null' : String(timerDurationSeconds)}
                   onValueChange={(value) => setTimerDurationSeconds(value === 'null' ? null : parseInt(value, 10))}
                 >
                   <SelectTrigger id="timer-select" className="w-[180px]">
-                    <SelectValue placeholder="Choisir un temps" />
+                    <SelectValue placeholder="Select a time" />
                   </SelectTrigger>
                   <SelectContent>
                     {TIMER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -244,12 +245,12 @@ export default function ExamModePage() {
             <CardFooter>
               {allMcqs.length > 0 ? (
                 <Button onClick={handleStartExam} size="lg" className="w-full">
-                  <PlayCircle className="mr-2 h-5 w-5"/> Commencer l'examen
+                  <PlayCircle className="mr-2 h-5 w-5"/> Start Exam
                 </Button>
               ) : (
                 <div className="text-center w-full space-y-2">
-                    <p className="text-sm text-muted-foreground">Aucune question n'a été chargée. Veuillez d'abord téléverser un QCM.</p>
-                    <Button asChild><Link href="/upload">Téléverser des questions</Link></Button>
+                    <p className="text-sm text-muted-foreground">No questions have been loaded. Please upload an MCQ set first.</p>
+                    <Button asChild><Link href="/upload">Upload Questions</Link></Button>
                 </div>
               )}
             </CardFooter>
@@ -262,12 +263,12 @@ export default function ExamModePage() {
   const currentQuestion = examQuestions[currentQuestionIndex];
 
   return (
-    <AppLayout pageTitle="Mode Examen">
+    <AppLayout pageTitle="Exam Mode">
       <div className="flex flex-col items-center space-y-4">
         <div className="w-full max-w-2xl space-y-2">
             <div className="flex justify-between items-center text-sm font-medium text-muted-foreground">
-                <span>Question {currentQuestionIndex + 1} sur {examQuestions.length}</span>
-                <button onClick={handleExit} className="text-xs hover:underline">Quitter l'examen</button>
+                <span>Question {currentQuestionIndex + 1} of {examQuestions.length}</span>
+                <button onClick={handleExit} className="text-xs hover:underline">Exit Exam</button>
             </div>
             <Progress value={progressPercentage} />
         </div>
@@ -283,22 +284,22 @@ export default function ExamModePage() {
         />
         {isAnswerSubmitted && (
           <Button onClick={handleNextQuestion} size="lg" className="min-w-[200px] animate-in fade-in">
-            {currentQuestionIndex < examQuestions.length - 1 ? 'Question suivante' : 'Voir les résultats'}
+            {currentQuestionIndex < examQuestions.length - 1 ? 'Next Question' : 'View Results'}
           </Button>
         )}
       </div>
        <AlertDialog open={isExitDialogOpen} onOpenChange={setIsExitDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr de vouloir quitter ?</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure you want to exit?</AlertDialogTitle>
             <AlertDialogDescription>
-              Votre progression dans cet examen sera perdue. Cette action est irréversible.
+              Your progress in this exam will be lost. This action is irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Rester</AlertDialogCancel>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
             <AlertDialogAction onClick={handleResetExam} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-              Quitter l'examen
+              Exit Exam
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

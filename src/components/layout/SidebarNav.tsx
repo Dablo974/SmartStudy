@@ -16,7 +16,7 @@ const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/study', label: 'Study Session', icon: BookOpenText },
   { href: '/manage-questions', label: 'Manage Questions', icon: ListChecks },
-  { href: '/exam-mode', label: 'Mode Examen', icon: ClipboardCheck },
+  { href: '/exam-mode', label: 'Exam Mode', icon: ClipboardCheck },
   {
     "group": "Creation",
     "items": [
@@ -25,7 +25,7 @@ const navItems = [
       { href: '/generate-from-pdf', label: 'Generate with AI', icon: Wand2 },
     ]
   },
-  { href: '/tutorial', label: 'Tutoriel', icon: HelpCircle },
+  { href: '/tutorial', label: 'Tutorial', icon: HelpCircle },
 ];
 
 export function SidebarNav() {

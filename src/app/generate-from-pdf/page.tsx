@@ -213,9 +213,9 @@ export default function GenerateFromPdfPage() {
               <CardContent>
                 <Alert className="mb-6">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Veuillez vérifier le contenu</AlertTitle>
+                    <AlertTitle>Please Verify Content</AlertTitle>
                     <AlertDescription>
-                    Les questions générées par l'IA peuvent contenir des inexactitudes. Nous vous encourageons à toujours vérifier les questions et les réponses avant de les utiliser pour vos études.
+                      AI-generated questions may contain inaccuracies. We encourage you to always review the questions and answers before using them for your studies.
                     </AlertDescription>
                 </Alert>
                 <FormField

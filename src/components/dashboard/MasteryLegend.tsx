@@ -6,11 +6,11 @@ import { cn } from '@/lib/utils';
 import { BookHeart, Info } from 'lucide-react';
 
 const masteryDescriptions = [
-    "Cette question est nouvelle ou a reçu une réponse incorrecte. Elle apparaîtra lors de votre prochaine session d'étude.",
-    "Vous commencez à l'apprendre. Elle réapparaîtra dans 2 sessions pour renforcer votre mémoire.",
-    "Vous vous familiarisez avec cette notion. Elle réapparaîtra dans 4 sessions.",
-    "Vous avez une bonne compréhension du sujet. Elle réapparaîtra dans 6 sessions pour assurer une rétention à long terme.",
-    "Vous maîtrisez cette question ! Elle réapparaîtra dans 8 sessions pour la garder fraîche dans votre esprit."
+    "This question is new or was answered incorrectly. It will appear in your next study session.",
+    "You're starting to learn this one. It will reappear in 2 sessions to strengthen your memory.",
+    "You're becoming familiar with this concept. It will reappear in 4 sessions.",
+    "You have a good understanding of the topic. It will reappear in 6 sessions to ensure long-term retention.",
+    "You've mastered this question! It will reappear in 8 sessions to keep it fresh in your mind."
 ];
 
 export function MasteryLegend() {
@@ -19,10 +19,10 @@ export function MasteryLegend() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Info className="h-6 w-6 text-accent" />
-                    Guide des Niveaux de Maîtrise
+                    Mastery Level Guide
                 </CardTitle>
                 <CardDescription>
-                    Votre niveau de maîtrise pour chaque question est basé sur le principe de la répétition espacée.
+                    Your mastery level for each question is based on the principle of spaced repetition.
                 </CardDescription>
             </CardHeader>
             <CardContent>

@@ -3,101 +3,101 @@
 
 This is a NextJS application designed as an intelligent MCQ learning platform with spaced repetition.
 
-## I. Prérequis (Identiques pour Linux et Windows)
+## I. Prerequisites (Same for Linux & Windows)
 
-1.  **Node.js et npm :**
-    *   Assurez-vous d'avoir installé Node.js. La version LTS (Long-Term Support) est généralement recommandée. Vous pouvez la télécharger sur [nodejs.org](https://nodejs.org/).
-    *   npm (Node Package Manager) est inclus avec Node.js. Vous pouvez vérifier les installations en ouvrant votre terminal/invite de commandes et en tapant :
+1.  **Node.js and npm:**
+    *   Ensure you have Node.js installed. The LTS (Long-Term Support) version is generally recommended. You can download it from [nodejs.org](https://nodejs.org/).
+    *   npm (Node Package Manager) is included with Node.js. You can verify the installations by opening your terminal/command prompt and typing:
         ```bash
         node -v
         npm -v
         ```
 
-2.  **Git :**
-    *   Si vous clonez le projet depuis GitHub (ce qui est recommandé), vous aurez besoin de Git. Téléchargez-le sur [git-scm.com](https://git-scm.com/).
+2.  **Git:**
+    *   If you are cloning the project from GitHub (which is recommended), you will need Git. Download it from [git-scm.com](https://git-scm.com/).
 
-## II. Obtenir l'Application et la Lancer
+## II. Getting and Running the Application
 
-Les étapes suivantes supposent que vous avez le code de votre projet soit localement, soit sur GitHub.
+The following steps assume you have the project code either locally or on GitHub.
 
-### A. Méthode Simplifiée avec Scripts (Recommandé)
+### A. Simplified Method with Scripts (Recommended)
 
-Des scripts ont été fournis pour simplifier l'installation des dépendances et le lancement de l'application. **C'est la méthode recommandée car elle gère tout pour vous.**
+Scripts have been provided to simplify dependency installation and launching the application. **This is the recommended method as it handles everything for you.**
 
-**Pour Linux :**
+**For Linux:**
 
-1.  Ouvrez votre terminal.
-2.  Naviguez vers le répertoire racine de votre projet.
-3.  Rendez le script exécutable (seulement la première fois) :
+1.  Open your terminal.
+2.  Navigate to your project's root directory.
+3.  Make the script executable (only the first time):
     ```bash
     chmod +x install_and_run.sh
     ```
-4.  Exécutez le script :
+4.  Run the script:
     ```bash
     ./install_and_run.sh
     ```
 
-**Pour Windows :**
+**For Windows:**
 
-1.  Ouvrez l'Explorateur de Fichiers et naviguez vers le répertoire racine de votre projet.
-2.  Double-cliquez sur le fichier `install_and_run.bat`.
-    *   Alternativement, ouvrez une Invite de Commandes ou PowerShell, naviguez vers le répertoire du projet, et exécutez :
+1.  Open File Explorer and navigate to your project's root directory.
+2.  Double-click the `install_and_run.bat` file.
+    *   Alternatively, open a Command Prompt or PowerShell, navigate to the project directory, and run:
         ```bash
         .\install_and_run.bat
         ```
 
-**Configuration de la clé API :**
-La première fois que vous lancerez le script, il vérifiera s'il a besoin d'une clé API pour les fonctionnalités d'IA. Si c'est le cas, il vous invitera à la saisir directement dans le terminal. La clé sera sauvegardée en toute sécurité dans un fichier `.env.local` pour les utilisations futures.
+**API Key Setup:**
+The first time you run the script, it will check if it needs an API key for the AI features. If so, it will prompt you to enter it directly in the terminal. The key will be securely saved in a `.env.local` file for future use.
 
-Une fois l'application lancée par le script, ouvrez votre navigateur web et allez à `http://localhost:9002`.
+Once the application is started by the script, open your web browser and go to `http://localhost:9002`.
 
-### B. Méthode Manuelle
+### B. Manual Method
 
-Si vous préférez ne pas utiliser les scripts, vous pouvez suivre ces étapes.
+If you prefer not to use the scripts, you can follow these steps.
 
-1.  **Ouvrez votre Terminal/Invite de Commandes.**
-2.  **Naviguez vers le Répertoire du Projet.**
-3.  **Configurez votre Clé API (Étape cruciale)** : Créez un fichier nommé `.env.local` à la racine du projet et ajoutez votre clé API Google Gemini. (Voir la section `IV. Configuration des Clés API` ci-dessous pour les détails).
-4.  **Installez les Dépendances :**
+1.  **Open your Terminal/Command Prompt.**
+2.  **Navigate to the Project Directory.**
+3.  **Configure your API Key (Crucial Step):** Create a file named `.env.local` in the project root and add your Google Gemini API key. (See section `IV. API Key Configuration` below for details).
+4.  **Install Dependencies:**
     ```bash
     npm install
     ```
-5.  **Lancez l'Application en Mode Développement :**
+5.  **Run the Application in Development Mode:**
     ```bash
     npm run dev
     ```
-    *   Le serveur démarrera sur `http://localhost:9002`.
+    *   The server will start on `http://localhost:9002`.
 
-## III. Différences Clés & Notes :
+## III. Key Differences & Notes:
 
-*   **Commandes Terminal :** Les commandes `npm` réelles (`npm install`, `npm run dev`) sont identiques sur Linux et Windows.
-*   **Variables d'Environnement :** L'utilisation d'un fichier `.env.local` est la méthode standard et fonctionne de manière identique sur tous les systèmes d'exploitation avec Next.js. Vous n'avez pas besoin d'utiliser la commande `export` ou `set` dans votre terminal.
+*   **Terminal Commands:** The actual `npm` commands (`npm install`, `npm run dev`) are identical on Linux and Windows.
+*   **Environment Variables:** Using a `.env.local` file is the standard method and works identically on all operating systems with Next.js. You do not need to use the `export` or `set` command in your terminal.
 
-## IV. Configuration des Clés API (Important pour la Sécurité)
+## IV. API Key Configuration (Important for Security)
 
-L'application utilise l'API Google Gemini pour les fonctionnalités d'intelligence artificielle.
+The application uses the Google Gemini API for its artificial intelligence features.
 
-**Votre clé API est SÉCURISÉE.** Elle est utilisée uniquement sur le serveur et n'est jamais exposée au navigateur de l'utilisateur.
+**Your API key is SECURE.** It is used only on the server and is never exposed to the user's browser.
 
-Pour configurer votre clé pour le développement local, la méthode la plus simple est d'utiliser les scripts de lancement (`install_and_run.sh` ou `install_and_run.bat`). Si la clé n'est pas configurée, le script vous demandera de la saisir et la sauvegardera pour vous dans un fichier `.env.local`.
+To configure your key for local development, the easiest method is to use the launch scripts (`install_and_run.sh` or `install_and_run.bat`). If the key is not configured, the script will ask you to enter it and will save it for you in a `.env.local` file.
 
-Ce fichier `.env.local` est ignoré par Git et ne sera donc jamais partagé. Il contiendra une ligne comme celle-ci :
+This `.env.local` file is ignored by Git and will therefore never be shared. It will contain a line like this:
 ```
-GOOGLE_API_KEY=VOTRE_CLE_API_GEMINI_ICI
+GOOGLE_API_KEY=YOUR_GEMINI_API_KEY_HERE
 ```
-(Remplacez `VOTRE_CLE_API_GEMINI_ICI` par la clé que vous avez obtenue depuis [Google AI Studio](https://aistudio.google.com/app/apikey)).
+(Replace `YOUR_GEMINI_API_KEY_HERE` with the key you obtained from [Google AI Studio](https://aistudio.google.com/app/apikey)).
 
-Une fois le fichier créé, redémarrez votre serveur de développement pour que Next.js prenne en compte la nouvelle variable d'environnement.
+Once the file is created, restart your development server for Next.js to pick up the new environment variable.
 
-## V. Création de QCMs
+## V. Creating MCQs
 
-1. Vous pouvez charger un qcm en format csv directement dans l'app
-2. Vous pouvez créer vous même vos qcms dans l'app puis les enrgistrer en .csv
-3. Vous pouvez générer des QCMs via l'IA en téléversant un cours au format PDF.
+1.  You can upload an MCQ set in CSV format directly in the app.
+2.  You can create your own MCQs in the app and then save them as a .csv file.
+3.  You can generate MCQs via AI by uploading a course in PDF format.
 
-Afin de vous faciliter vos révisions je vous conseil de donner votre cours à un LLM (chat gpt, mistral, gemini ...) avec le prompt suivant:
-"fais un qcm en format csv suivant le format suivant: 
+To facilitate your revisions, I recommend giving your course material to an LLM (ChatGPT, Mistral, Gemini, etc.) with the following prompt:
+"create an mcq in csv format following this structure:
 question,option1,option2,option3,option4,correctAnswerIndex,subject,explanation
-Sois le plus exhaustif possible et index les réponses à 1."
+Be as exhaustive as possible and use 1-based indexing for the correct answer."
 
-Il ne faut pas hésiter à ajouter manuellement des questions si nécessaire.
+Feel free to manually add questions if necessary.

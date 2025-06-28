@@ -392,12 +392,12 @@ export default function StudySessionPage() {
             <CardHeader>
               <CardTitle className="text-2xl flex items-center justify-center gap-2">
                 <CalendarCheck2 className="w-8 h-8 text-green-500" />
-                Excellent ! Session {currentSessionNumber} maîtrisée !
+                All caught up for Session {currentSessionNumber}!
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-lg text-muted-foreground">
-                Il n'y a aucune question à réviser. Vous pouvez faire une pause ou, si vous le souhaitez, passer directement à la session suivante.
+                There are no questions due for review. Take a break, or if you're ready, jump into the next session.
               </p>
               <Button onClick={handleStartNextSession} className="w-full">
                 Start Next Session (Session {currentSessionNumber + 1})
