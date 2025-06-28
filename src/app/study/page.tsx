@@ -60,7 +60,7 @@ export default function StudySessionPage() {
 
   const [timerDurationSeconds, setTimerDurationSeconds] = useState<number | null>(null);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
-  const [isTimerActive, setIsTimerActive] = useState(false);
+  const isTimerActiveRef = useRef(false);
   const timerIdRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -152,8 +152,7 @@ export default function StudySessionPage() {
         .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
 
       if (dueQuestions.length > 0) {
-        // We found questions for this session number. Load the session.
-        setSessionInitialState(JSON.parse(JSON.stringify(dueQuestions))); // Deep copy for initial state
+        setSessionInitialState(JSON.parse(JSON.stringify(dueQuestions)));
         setSessionQuestions(dueQuestions);
         setInitialSessionQuestionCount(dueQuestions.length);
         setCurrentQuestionIndex(0);
@@ -163,53 +162,38 @@ export default function StudySessionPage() {
         prevSessionNumberRef.current = currentSessionNumber;
         setIsLoading(false);
       } else {
-        // No questions due for the current session.
         if (activeMcqs.length > 0) {
           const futureSessionNumbers = activeMcqs
             .map(q => q.nextReviewSession)
             .filter(sessionNum => sessionNum > currentSessionNumber);
 
           if (futureSessionNumbers.length > 0) {
-            // There are questions in a future session. Jump to the next available one.
             const nextAvailableSession = Math.min(...futureSessionNumbers);
-            // This will cause the effect to re-run with the new session number.
-            // We leave isLoading=true to show the loading state during the jump.
             setCurrentSessionNumber(nextAvailableSession);
           } else {
-            // No questions due now, and no questions scheduled for the future.
-            // This is the "All caught up" state. Load an empty session.
             setSessionInitialState([]);
             setSessionQuestions([]);
             setInitialSessionQuestionCount(0);
-            setCurrentQuestionIndex(0);
-            setScore(0);
-            setShowResults(false);
-            setIsAnswerSubmitted(false);
             prevSessionNumberRef.current = currentSessionNumber;
             setIsLoading(false);
           }
         } else {
-          // There are no active questions at all. Load an empty session.
           setSessionInitialState([]);
           setSessionQuestions([]);
           setInitialSessionQuestionCount(0);
-          setCurrentQuestionIndex(0);
-          setScore(0);
-          setShowResults(false);
-          setIsAnswerSubmitted(false);
           prevSessionNumberRef.current = currentSessionNumber;
           setIsLoading(false);
         }
       }
     } else if (isLoading) {
-      // This handles cases where the effect re-runs but the session number hasn't changed.
       setIsLoading(false);
     }
   }, [allMcqSets, currentSessionNumber, isLoading]);
 
-  const handleAnswerSubmit = useCallback((isCorrect: boolean, fromTimeout: boolean = false) => {
-    if (!sessionQuestions[currentQuestionIndex] || currentSessionNumber === null || allMcqSets === null) return;
+  const handleAnswerSubmit = useCallback((isCorrect: boolean, selectedIndex: number | null, fromTimeout: boolean = false) => {
+    if (!sessionQuestions[currentQuestionIndex] || currentSessionNumber === null || allMcqSets === null || isAnswerSubmitted) return;
     
+    if (timerIdRef.current) clearInterval(timerIdRef.current);
     const currentQuestionId = sessionQuestions[currentQuestionIndex].id;
 
     setAllMcqSets(prevSets => 
@@ -224,10 +208,7 @@ export default function StudySessionPage() {
 
         if (isCorrect) {
           newTimesCorrect++;
-          newIntervalIndex = q.intervalIndex + 1;
-          if (newIntervalIndex >= REVIEW_INTERVALS_SESSIONS.length) {
-            newIntervalIndex = REVIEW_INTERVALS_SESSIONS.length - 1;
-          }
+          newIntervalIndex = Math.min(q.intervalIndex + 1, REVIEW_INTERVALS_SESSIONS.length - 1);
         } else {
           newTimesIncorrect++;
           newIntervalIndex = 0; 
@@ -273,66 +254,54 @@ export default function StudySessionPage() {
       });
     }
     setIsAnswerSubmitted(true);
-  }, [sessionQuestions, currentQuestionIndex, currentSessionNumber, allMcqSets, toast]);
+  }, [sessionQuestions, currentQuestionIndex, currentSessionNumber, allMcqSets, toast, isAnswerSubmitted]);
 
 
   useEffect(() => {
-    if (timerIdRef.current) {
-      clearInterval(timerIdRef.current);
-      timerIdRef.current = null;
-    }
-
-    if (timerDurationSeconds && sessionQuestions.length > 0 && currentQuestionIndex < sessionQuestions.length && !isAnswerSubmitted && !showResults) {
-      setIsTimerActive(true);
+    if (timerIdRef.current) clearInterval(timerIdRef.current);
+    
+    if (timerDurationSeconds && sessionQuestions.length > 0 && !isAnswerSubmitted && !showResults) {
+      isTimerActiveRef.current = true;
       setRemainingTime(timerDurationSeconds);
 
       timerIdRef.current = setInterval(() => {
         setRemainingTime(prevTime => {
-          if (prevTime === null) {
+          if (prevTime === null || !isTimerActiveRef.current) {
             clearInterval(timerIdRef.current!);
-            timerIdRef.current = null;
-            setIsTimerActive(false);
             return null;
           }
           if (prevTime <= 1) {
             clearInterval(timerIdRef.current!);
-            timerIdRef.current = null;
-            setIsTimerActive(false);
-            handleAnswerSubmit(false, true); 
+            handleAnswerSubmit(false, null, true); 
             return 0;
           }
           return prevTime - 1;
         });
       }, 1000);
     } else {
-      setIsTimerActive(false);
+      isTimerActiveRef.current = false;
       setRemainingTime(null);
     }
 
     return () => {
-      if (timerIdRef.current) {
-        clearInterval(timerIdRef.current);
-        timerIdRef.current = null;
-      }
+      if (timerIdRef.current) clearInterval(timerIdRef.current);
     };
   }, [currentQuestionIndex, timerDurationSeconds, isAnswerSubmitted, sessionQuestions, showResults, handleAnswerSubmit]);
 
-  // Gamification: Update streak on viewing results
   useEffect(() => {
     if (showResults) {
+      isTimerActiveRef.current = false;
+      if (timerIdRef.current) clearInterval(timerIdRef.current);
+
       const today = new Date();
-      const todayStr = today.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+      const todayStr = today.toISOString().split('T')[0];
 
       const storedStatsString = localStorage.getItem(LOCAL_STORAGE_GAMIFICATION_KEY);
       let stats: GamificationStats;
 
-      if (storedStatsString) {
-        try {
-          stats = JSON.parse(storedStatsString);
-        } catch (e) {
-          stats = { currentStreak: 0, longestStreak: 0, lastSessionDate: '' };
-        }
-      } else {
+      try {
+        stats = storedStatsString ? JSON.parse(storedStatsString) : { currentStreak: 0, longestStreak: 0, lastSessionDate: '' };
+      } catch (e) {
         stats = { currentStreak: 0, longestStreak: 0, lastSessionDate: '' };
       }
 
@@ -341,22 +310,11 @@ export default function StudySessionPage() {
         yesterday.setDate(today.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-        if (stats.lastSessionDate === yesterdayStr) {
-          // Consecutive day
-          stats.currentStreak += 1;
-        } else {
-          // Not a consecutive day, reset streak to 1
-          stats.currentStreak = 1;
-        }
-
+        stats.currentStreak = stats.lastSessionDate === yesterdayStr ? stats.currentStreak + 1 : 1;
         stats.lastSessionDate = todayStr;
-
-        if (stats.currentStreak > stats.longestStreak) {
-          stats.longestStreak = stats.currentStreak;
-        }
+        stats.longestStreak = Math.max(stats.longestStreak, stats.currentStreak);
 
         localStorage.setItem(LOCAL_STORAGE_GAMIFICATION_KEY, JSON.stringify(stats));
-        // Dispatch a custom event so other components (like the header) can react to the change
         window.dispatchEvent(new CustomEvent('gamificationUpdate'));
       }
     }
@@ -377,7 +335,7 @@ export default function StudySessionPage() {
     const dueQuestions = allMcqsFlat
       .filter(q => q.nextReviewSession <= currentSessionNumber)
       .sort((a, b) => a.nextReviewSession - b.nextReviewSession || (a.lastReviewedSession || 0) - (b.lastReviewedSession || 0) || a.id.localeCompare(b.id));
-    setSessionInitialState(JSON.parse(JSON.stringify(dueQuestions))); // Re-capture initial state
+    setSessionInitialState(JSON.parse(JSON.stringify(dueQuestions)));
     setSessionQuestions(dueQuestions);
     setInitialSessionQuestionCount(dueQuestions.length);
     setCurrentQuestionIndex(0);
@@ -465,13 +423,12 @@ export default function StudySessionPage() {
   const sessionAccuracy = initialSessionQuestionCount > 0 ? (score / initialSessionQuestionCount) * 100 : 0;
 
   if (showResults) {
-    // Find the final state of the questions from the master list
     const finalSessionState = sessionInitialState.map(initialQ => {
         for (const set of allMcqSets || []) {
             const finalQ = set.mcqs.find(mcq => mcq.id === initialQ.id);
             if (finalQ) return finalQ;
         }
-        return initialQ; // Fallback
+        return initialQ;
     });
 
     return (
@@ -548,7 +505,7 @@ export default function StudySessionPage() {
           <QuestionDisplay
             key={sessionQuestions[currentQuestionIndex].id} 
             question={sessionQuestions[currentQuestionIndex]}
-            onAnswerSubmit={(isCorrect) => handleAnswerSubmit(isCorrect, false)}
+            onAnswerSubmit={(isCorrect, selectedIndex) => handleAnswerSubmit(isCorrect, selectedIndex, false)}
             questionNumber={currentQuestionIndex + 1}
             totalQuestions={initialSessionQuestionCount}
             remainingTime={remainingTime}

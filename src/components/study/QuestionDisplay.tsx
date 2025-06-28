@@ -13,10 +13,11 @@ import { masteryLevels } from '@/lib/mastery';
 
 interface QuestionDisplayProps {
   question: MCQ;
-  onAnswerSubmit: (isCorrect: boolean) => void;
+  onAnswerSubmit: (isCorrect: boolean, selectedIndex: number | null) => void;
   questionNumber: number;
   totalQuestions: number;
   remainingTime: number | null;
+  isExamMode?: boolean;
 }
 
 interface ShuffledOption {
@@ -24,7 +25,7 @@ interface ShuffledOption {
   originalIndex: number;
 }
 
-export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, totalQuestions, remainingTime }: QuestionDisplayProps) {
+export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, totalQuestions, remainingTime, isExamMode = false }: QuestionDisplayProps) {
   const [shuffledOptions, setShuffledOptions] = useState<ShuffledOption[]>([]);
   const [selectedOriginalIndex, setSelectedOriginalIndex] = useState<number | undefined>(undefined);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -40,9 +41,12 @@ export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, tota
       }));
 
       const newShuffledOptions = [...optionsWithOriginalIndex];
-      for (let i = newShuffledOptions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newShuffledOptions[i], newShuffledOptions[j]] = [newShuffledOptions[j], newShuffledOptions[i]];
+      // In exam mode, we don't shuffle to maintain consistency for review
+      if (!isExamMode) {
+        for (let i = newShuffledOptions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [newShuffledOptions[i], newShuffledOptions[j]] = [newShuffledOptions[j], newShuffledOptions[i]];
+        }
       }
       setShuffledOptions(newShuffledOptions);
       
@@ -50,7 +54,7 @@ export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, tota
       setIsSubmitted(false);
       setIsCorrect(null);
     }
-  }, [question]);
+  }, [question, isExamMode]);
 
   const handleSubmit = () => {
     if (selectedOriginalIndex === undefined) {
@@ -60,7 +64,7 @@ export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, tota
     const correct = selectedOriginalIndex === question.correctAnswerIndex;
     setIsCorrect(correct);
     setIsSubmitted(true);
-    onAnswerSubmit(correct);
+    onAnswerSubmit(correct, selectedOriginalIndex);
   };
 
   const getOptionLabel = (index: number) => String.fromCharCode(65 + index);
@@ -71,10 +75,12 @@ export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, tota
         <div className="flex justify-between items-center">
           <CardTitle>Question {questionNumber} <span className="text-muted-foreground text-sm">of {totalQuestions}</span></CardTitle>
           <div className="flex items-center gap-3">
-            <span className={cn("flex items-center gap-1.5 text-xs font-semibold px-2 py-1 rounded-md", mastery.className)}>
-              <BookHeart className="h-3.5 w-3.5" />
-              {mastery.level}
-            </span>
+            {!isExamMode && (
+              <span className={cn("flex items-center gap-1.5 text-xs font-semibold px-2 py-1 rounded-md", mastery.className)}>
+                <BookHeart className="h-3.5 w-3.5" />
+                {mastery.level}
+              </span>
+            )}
             {remainingTime !== null && (
               <span
                 className={cn(
@@ -125,7 +131,7 @@ export function QuestionDisplay({ question, onAnswerSubmit, questionNumber, tota
                 )}
               >
                 <RadioGroupItem value={optionItem.originalIndex.toString()} id={`option-${optionItem.originalIndex}`} className="shrink-0" />
-                <span className="font-medium">{getOptionLabel(displayIndex)}.</span>
+                <span className="font-medium">{getOptionLabel(isExamMode ? optionItem.originalIndex : displayIndex)}.</span>
                 <span>{optionItem.text}</span>
                 {isSubmitted && isSelected && isActuallyCorrectOption && <CheckCircle2 className="ml-auto h-5 w-5 text-green-500" />}
                 {isSubmitted && isSelected && !isActuallyCorrectOption && <XCircle className="ml-auto h-5 w-5 text-red-500" />}

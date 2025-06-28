@@ -41,3 +41,9 @@ export interface GamificationStats {
   longestStreak: number;
   lastSessionDate: string; // ISO Date string 'YYYY-MM-DD'
 }
+
+export interface ExamAnswer {
+  question: MCQ;
+  userAnswerIndex: number | null; // The index of the option the user selected. null if timed out.
+  isCorrect: boolean;
+}
