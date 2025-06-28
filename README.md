@@ -101,3 +101,38 @@ question,option1,option2,option3,option4,correctAnswerIndex,subject,explanation
 Be as exhaustive as possible and use 1-based indexing for the correct answer."
 
 Feel free to manually add questions if necessary.
+
+## VI. Deployment on Vercel (Free)
+
+The easiest way to deploy this application for free is by using Vercel.
+
+### Prerequisites
+*   A [GitHub](https://github.com/), [GitLab](https://gitlab.com/), or [Bitbucket](https://bitbucket.org/) account.
+*   Your application code pushed to a repository on one of these platforms.
+
+### Step-by-Step Guide
+
+1.  **Sign Up/Log In to Vercel**: Go to [vercel.com](https://vercel.com/) and create an account. It's easiest to sign up with your Git provider account.
+
+2.  **Import Your Project**:
+    *   From your Vercel dashboard, click **"Add New..." -> "Project"**.
+    *   Find your project repository and click the **"Import"** button next to it.
+
+3.  **Configure Your Project**:
+    *   Vercel will automatically detect that you're using Next.js and will pre-fill all the correct build settings. You don't need to change anything here.
+    *   The most important step is to add your API key.
+
+4.  **Add Environment Variable**:
+    *   Expand the **"Environment Variables"** section.
+    *   Add a new variable:
+        *   **Name**: `GOOGLE_API_KEY`
+        *   **Value**: Paste the API key you got from Google AI Studio.
+    *   Make sure the variable is available for all environments (Production, Preview, Development).
+    *   Click **"Add"**.
+
+5.  **Deploy**:
+    *   Click the **"Deploy"** button.
+    *   Vercel will now build and deploy your application. In a few minutes, you'll have a live URL to access your app!
+
+### Important Note for the Free Plan
+Vercel's free "Hobby" plan has a **10-second execution limit** for server-side functions. The AI generation from a PDF can sometimes take longer than this, especially for large documents. If you encounter errors with large PDFs, this is likely the cause. For most use cases, it should work perfectly.
