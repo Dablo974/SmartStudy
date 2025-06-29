@@ -125,7 +125,8 @@ export default function ProfilePage() {
                       <TooltipContent>
                         <p className="font-bold">{ach.name}</p>
                         <p>{ach.description}</p>
-                        <p className="italic text-muted-foreground">Locked</p>
+                        <p className="italic text-muted-foreground mt-1">Locked</p>
+                        <p className="font-semibold text-yellow-500 opacity-75 mt-1">+{ach.xp} XP</p>
                       </TooltipContent>
                     </Tooltip>
                   ))}
