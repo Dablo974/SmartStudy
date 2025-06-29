@@ -22,22 +22,29 @@ interface HeaderProps {
 }
 
 const LOCAL_STORAGE_AVATAR_KEY = 'smartStudyProUserAvatar';
+const LOCAL_STORAGE_USERNAME_KEY = 'smartStudyProUsername';
 
 export function Header({ title }: HeaderProps) {
   const [avatarUrl, setAvatarUrl] = useState(defaultAvatar.url);
+  const [username, setUsername] = useState('Smart Student');
 
   useEffect(() => {
-    const handleAvatarChange = () => {
-      const storedUrl = localStorage.getItem(LOCAL_STORAGE_AVATAR_KEY);
-      setAvatarUrl(storedUrl || defaultAvatar.url);
+    const handleStorageChange = () => {
+      const storedAvatarUrl = localStorage.getItem(LOCAL_STORAGE_AVATAR_KEY);
+      setAvatarUrl(storedAvatarUrl || defaultAvatar.url);
+
+      const storedUsername = localStorage.getItem(LOCAL_STORAGE_USERNAME_KEY);
+      setUsername(storedUsername || 'Smart Student');
     };
 
-    handleAvatarChange(); // Initial load
+    handleStorageChange(); // Initial load
 
-    window.addEventListener('avatarChange', handleAvatarChange);
+    window.addEventListener('avatarChange', handleStorageChange);
+    window.addEventListener('usernameChange', handleStorageChange);
 
     return () => {
-      window.removeEventListener('avatarChange', handleAvatarChange);
+      window.removeEventListener('avatarChange', handleStorageChange);
+      window.removeEventListener('usernameChange', handleStorageChange);
     };
   }, []);
 
@@ -57,11 +64,11 @@ export function Header({ title }: HeaderProps) {
           <DropdownMenuTrigger asChild>
             <Avatar className="h-9 w-9 cursor-pointer">
               <AvatarImage src={avatarUrl} alt="User Avatar" data-ai-hint={currentAvatarHint} />
-              <AvatarFallback>SS</AvatarFallback>
+              <AvatarFallback>{username.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>{username}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/profile">

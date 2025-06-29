@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import type { GamificationStats, McqSet } from '@/lib/types';
 import { achievementsList, type Achievement } from '@/lib/achievements';
 import { cn } from '@/lib/utils';
-import { Lock, Star, Pencil } from 'lucide-react';
+import { Lock, Star, Pencil, Save, X } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -20,17 +20,24 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { preselectedAvatars, defaultAvatar } from '@/lib/avatars';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 const LOCAL_STORAGE_GAMIFICATION_KEY = 'smartStudyProGamificationStats';
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 const LOCAL_STORAGE_AVATAR_KEY = 'smartStudyProUserAvatar';
+const LOCAL_STORAGE_USERNAME_KEY = 'smartStudyProUsername';
 
 export default function ProfilePage() {
+  const { toast } = useToast();
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
   const [lockedAchievements, setLockedAchievements] = useState<Achievement[]>([]);
   const [levelInfo, setLevelInfo] = useState({ level: 1, currentXp: 0, xpInLevel: 0, xpForNextLevel: 100, progress: 0 });
   const [avatarUrl, setAvatarUrl] = useState(defaultAvatar.url);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
+  const [username, setUsername] = useState('Smart Student');
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [editingUsernameValue, setEditingUsernameValue] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -64,6 +71,11 @@ export default function ProfilePage() {
       // Load Avatar
       const storedAvatar = localStorage.getItem(LOCAL_STORAGE_AVATAR_KEY);
       setAvatarUrl(storedAvatar || defaultAvatar.url);
+      
+      // Load Username
+      const storedUsername = localStorage.getItem(LOCAL_STORAGE_USERNAME_KEY);
+      setUsername(storedUsername || 'Smart Student');
+      setEditingUsernameValue(storedUsername || 'Smart Student');
 
     } catch (e) {
       console.error("Failed to load user profile data", e);
@@ -78,6 +90,36 @@ export default function ProfilePage() {
     setIsAvatarDialogOpen(false);
   };
 
+  const handleEditUsernameClick = () => {
+    setEditingUsernameValue(username);
+    setIsEditingUsername(true);
+  };
+  
+  const handleSaveUsername = () => {
+    if (editingUsernameValue.trim()) {
+      const newUsername = editingUsernameValue.trim();
+      setUsername(newUsername);
+      localStorage.setItem(LOCAL_STORAGE_USERNAME_KEY, newUsername);
+      window.dispatchEvent(new CustomEvent('usernameChange'));
+      setIsEditingUsername(false);
+      toast({
+        title: "Username Updated",
+        description: `Your new username is ${newUsername}.`,
+      });
+    } else {
+        toast({
+            title: "Invalid Username",
+            description: "Username cannot be empty.",
+            variant: "destructive",
+        });
+    }
+  };
+
+  const handleCancelEditUsername = () => {
+    setEditingUsernameValue(username);
+    setIsEditingUsername(false);
+  };
+
   const currentAvatarHint = preselectedAvatars.find(a => a.url === avatarUrl)?.hint || defaultAvatar.hint;
 
   return (
@@ -88,7 +130,7 @@ export default function ProfilePage() {
             <div className="relative group">
                 <Avatar className="h-20 w-20 border-2 border-primary">
                 <AvatarImage src={avatarUrl} alt="User Avatar" data-ai-hint={currentAvatarHint} />
-                <AvatarFallback>SS</AvatarFallback>
+                <AvatarFallback>{username.substring(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <Button 
                     variant="outline" 
@@ -101,7 +143,29 @@ export default function ProfilePage() {
             </div>
             <div className="flex-grow w-full">
                 <div className="flex justify-between items-baseline">
-                    <CardTitle className="text-3xl">Smart Student</CardTitle>
+                    {!isEditingUsername ? (
+                      <div className="flex items-center gap-2 group">
+                        <CardTitle className="text-3xl">{username}</CardTitle>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleEditUsernameClick}>
+                            <Pencil className="h-4 w-4"/>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 w-full">
+                        <Input 
+                            value={editingUsernameValue}
+                            onChange={(e) => setEditingUsernameValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if(e.key === 'Enter') handleSaveUsername();
+                                if(e.key === 'Escape') handleCancelEditUsername();
+                            }}
+                            className="text-3xl font-semibold h-auto p-0 border-0 border-b-2 rounded-none focus-visible:ring-0"
+                            autoFocus
+                        />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-100" onClick={handleSaveUsername}><Save className="h-5 w-5"/></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={handleCancelEditUsername}><X className="h-5 w-5"/></Button>
+                      </div>
+                    )}
                     <span className="font-bold text-2xl text-accent">Level {levelInfo.level}</span>
                 </div>
                 <CardDescription>Your learning journey and achievements.</CardDescription>
