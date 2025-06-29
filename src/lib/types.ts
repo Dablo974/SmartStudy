@@ -40,6 +40,8 @@ export interface GamificationStats {
   currentStreak: number;
   longestStreak: number;
   lastSessionDate: string; // ISO Date string 'YYYY-MM-DD'
+  sessionsCompleted: number;
+  perfectSessionsCount: number;
 }
 
 export interface ExamAnswer {

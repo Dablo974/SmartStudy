@@ -300,11 +300,12 @@ export default function StudySessionPage() {
       let stats: GamificationStats;
 
       try {
-        stats = storedStatsString ? JSON.parse(storedStatsString) : { currentStreak: 0, longestStreak: 0, lastSessionDate: '' };
+        stats = storedStatsString ? JSON.parse(storedStatsString) : { currentStreak: 0, longestStreak: 0, lastSessionDate: '', sessionsCompleted: 0, perfectSessionsCount: 0 };
       } catch (e) {
-        stats = { currentStreak: 0, longestStreak: 0, lastSessionDate: '' };
+        stats = { currentStreak: 0, longestStreak: 0, lastSessionDate: '', sessionsCompleted: 0, perfectSessionsCount: 0 };
       }
 
+      // Update streak
       if (stats.lastSessionDate !== todayStr) {
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
@@ -313,12 +314,18 @@ export default function StudySessionPage() {
         stats.currentStreak = stats.lastSessionDate === yesterdayStr ? stats.currentStreak + 1 : 1;
         stats.lastSessionDate = todayStr;
         stats.longestStreak = Math.max(stats.longestStreak, stats.currentStreak);
-
-        localStorage.setItem(LOCAL_STORAGE_GAMIFICATION_KEY, JSON.stringify(stats));
-        window.dispatchEvent(new CustomEvent('gamificationUpdate'));
       }
+
+      // Update session stats
+      stats.sessionsCompleted = (stats.sessionsCompleted || 0) + 1;
+      if (initialSessionQuestionCount > 0 && score === initialSessionQuestionCount) {
+        stats.perfectSessionsCount = (stats.perfectSessionsCount || 0) + 1;
+      }
+
+      localStorage.setItem(LOCAL_STORAGE_GAMIFICATION_KEY, JSON.stringify(stats));
+      window.dispatchEvent(new CustomEvent('gamificationUpdate'));
     }
-  }, [showResults]);
+  }, [showResults, score, initialSessionQuestionCount]);
 
   const handleNextQuestion = () => {
     setIsAnswerSubmitted(false);

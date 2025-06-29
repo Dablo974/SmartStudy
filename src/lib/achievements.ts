@@ -2,7 +2,7 @@
 'use client';
 
 import type { GamificationStats, McqSet } from './types';
-import { Flame, Star, BrainCircuit, Sparkles, FilePlus2, Award, Library, Target, TrendingUp } from 'lucide-react';
+import { Flame, Star, BrainCircuit, Sparkles, FilePlus2, Award, Library, Target, TrendingUp, Trophy, Medal } from 'lucide-react';
 import { masteryLevels } from './mastery';
 
 export interface Achievement {
@@ -99,5 +99,19 @@ export const achievementsList: Achievement[] = [
     description: 'Maintain a 30-day study streak.',
     icon: TrendingUp,
     isUnlocked: (stats) => (stats.gamification?.currentStreak ?? 0) >= 30,
+  },
+  {
+    id: 'perfect-session',
+    name: 'Perfecto!',
+    description: 'Get a 100% correct score in a study session.',
+    icon: Trophy,
+    isUnlocked: (stats) => (stats.gamification?.perfectSessionsCount ?? 0) > 0,
+  },
+  {
+    id: 'session-veteran',
+    name: 'Session Veteran',
+    description: 'Complete 10 study sessions.',
+    icon: Medal,
+    isUnlocked: (stats) => (stats.gamification?.sessionsCompleted ?? 0) >= 10,
   },
 ];
