@@ -12,6 +12,7 @@ import {
 import { LogOut, User } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { StreakDisplay } from '@/components/gamification/StreakDisplay';
+import { LevelDisplay } from '@/components/gamification/LevelDisplay';
 import Link from 'next/link';
 
 interface HeaderProps {
@@ -26,6 +27,7 @@ export function Header({ title }: HeaderProps) {
         <h1 className="text-xl font-semibold text-foreground">{title}</h1>
       </div>
       <div className="flex items-center gap-4">
+        <LevelDisplay />
         <StreakDisplay />
         <ThemeToggle />
         <DropdownMenu>

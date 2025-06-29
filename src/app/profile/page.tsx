@@ -8,13 +8,15 @@ import { useEffect, useState } from 'react';
 import type { GamificationStats, McqSet } from '@/lib/types';
 import { achievementsList, type Achievement } from '@/lib/achievements';
 import { cn } from '@/lib/utils';
-import { Lock } from 'lucide-react';
+import { Lock, Star } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { calculateLevel } from '@/lib/experience';
+import { Progress } from '@/components/ui/progress';
 
 const LOCAL_STORAGE_GAMIFICATION_KEY = 'smartStudyProGamificationStats';
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
@@ -22,6 +24,7 @@ const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 export default function ProfilePage() {
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
   const [lockedAchievements, setLockedAchievements] = useState<Achievement[]>([]);
+  const [levelInfo, setLevelInfo] = useState({ level: 1, currentXp: 0, xpInLevel: 0, xpForNextLevel: 100, progress: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -37,8 +40,19 @@ export default function ProfilePage() {
       const unlocked = achievementsList.filter(ach => ach.isUnlocked(stats));
       const locked = achievementsList.filter(ach => !ach.isUnlocked(stats));
       
+      const newTotalXp = unlocked.reduce((sum, ach) => sum + ach.xp, 0);
+
+      const currentStats: GamificationStats = gamification || { currentStreak: 0, longestStreak: 0, lastSessionDate: '', sessionsCompleted: 0, perfectSessionsCount: 0, totalXp: 0 };
+      
+      if (currentStats.totalXp !== newTotalXp) {
+        const updatedStats = { ...currentStats, totalXp: newTotalXp };
+        localStorage.setItem(LOCAL_STORAGE_GAMIFICATION_KEY, JSON.stringify(updatedStats));
+        window.dispatchEvent(new CustomEvent('gamificationUpdate'));
+      }
+
       setUnlockedAchievements(unlocked);
       setLockedAchievements(locked);
+      setLevelInfo(calculateLevel(newTotalXp));
 
     } catch (e) {
       console.error("Failed to load user profile data", e);
@@ -50,14 +64,24 @@ export default function ProfilePage() {
     <AppLayout pageTitle="My Profile">
       <div className="space-y-6">
         <Card className="shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
-          <CardHeader className="flex flex-row items-center gap-4">
+          <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <Avatar className="h-20 w-20 border-2 border-primary">
               <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar" />
               <AvatarFallback>SS</AvatarFallback>
             </Avatar>
-            <div>
-              <CardTitle className="text-3xl">Smart Student</CardTitle>
-              <CardDescription>Your learning journey and achievements.</CardDescription>
+            <div className="flex-grow w-full">
+                <div className="flex justify-between items-baseline">
+                    <CardTitle className="text-3xl">Smart Student</CardTitle>
+                    <span className="font-bold text-2xl text-accent">Level {levelInfo.level}</span>
+                </div>
+                <CardDescription>Your learning journey and achievements.</CardDescription>
+                <div className="mt-4">
+                    <div className="flex justify-between text-sm text-muted-foreground mb-1">
+                        <span>Level Progress</span>
+                        <span>{levelInfo.xpInLevel} / {levelInfo.xpForNextLevel} XP</span>
+                    </div>
+                    <Progress value={levelInfo.progress} className="h-3" />
+                </div>
             </div>
           </CardHeader>
         </Card>
@@ -86,6 +110,7 @@ export default function ProfilePage() {
                       <TooltipContent>
                         <p className="font-bold">{ach.name}</p>
                         <p>{ach.description}</p>
+                        <p className="font-semibold text-yellow-500 mt-1">+{ach.xp} XP</p>
                       </TooltipContent>
                     </Tooltip>
                   ))}

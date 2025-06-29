@@ -10,6 +10,7 @@ export interface Achievement {
   name: string;
   description: string;
   icon: React.ElementType;
+  xp: number;
   isUnlocked: (stats: { gamification: GamificationStats | null; mcqSets: McqSet[] | null }) => boolean;
 }
 
@@ -21,6 +22,7 @@ export const achievementsList: Achievement[] = [
     name: 'First Step',
     description: 'Complete your first study session.',
     icon: Star,
+    xp: 10,
     isUnlocked: (stats) => !!stats.gamification?.lastSessionDate,
   },
   {
@@ -28,6 +30,7 @@ export const achievementsList: Achievement[] = [
     name: 'Creator',
     description: 'Upload or create your first question set.',
     icon: FilePlus2,
+    xp: 20,
     isUnlocked: (stats) => (stats.mcqSets?.length ?? 0) > 0,
   },
     {
@@ -35,14 +38,16 @@ export const achievementsList: Achievement[] = [
     name: 'AI Explorer',
     description: 'Generate a question set using AI.',
     icon: Sparkles,
+    xp: 25,
     isUnlocked: (stats) =>
-      !!stats.mcqs?.some(set => set.fileName.startsWith('AI-Generated -')),
+      !!stats.mcqSets?.some(set => set.fileName.startsWith('AI-Generated -')),
   },
   {
     id: '7-day-streak',
     name: 'Consistent Learner',
     description: 'Maintain a 7-day study streak.',
     icon: Flame,
+    xp: 50,
     isUnlocked: (stats) => (stats.gamification?.currentStreak ?? 0) >= 7,
   },
   {
@@ -50,6 +55,7 @@ export const achievementsList: Achievement[] = [
     name: 'Master of One',
     description: 'Master your first question.',
     icon: BrainCircuit,
+    xp: 30,
     isUnlocked: (stats) =>
       !!stats.mcqSets?.some(set =>
         set.isActive && set.mcqs.some(mcq => mcq.intervalIndex === MAX_INTERVAL_INDEX)
@@ -60,6 +66,7 @@ export const achievementsList: Achievement[] = [
     name: 'High Achiever',
     description: 'Answer 100 questions correctly in total.',
     icon: Target,
+    xp: 50,
     isUnlocked: (stats) => {
         const totalCorrect = stats.mcqSets?.reduce((acc, set) => {
             if (!set.isActive) return acc;
@@ -73,6 +80,7 @@ export const achievementsList: Achievement[] = [
     name: 'Knowledge Hoarder',
     description: 'Accumulate over 200 questions across all active sets.',
     icon: Library,
+    xp: 75,
     isUnlocked: (stats) => {
         const totalQuestions = stats.mcqSets?.reduce((acc, set) => {
             if (!set.isActive) return acc;
@@ -86,6 +94,7 @@ export const achievementsList: Achievement[] = [
     name: 'Set Master',
     description: 'Master an entire question set.',
     icon: Award,
+    xp: 150,
     isUnlocked: (stats) =>
       !!stats.mcqSets?.some(set =>
         set.isActive &&
@@ -98,6 +107,7 @@ export const achievementsList: Achievement[] = [
     name: 'Marathon Runner',
     description: 'Maintain a 30-day study streak.',
     icon: TrendingUp,
+    xp: 150,
     isUnlocked: (stats) => (stats.gamification?.currentStreak ?? 0) >= 30,
   },
   {
@@ -105,6 +115,7 @@ export const achievementsList: Achievement[] = [
     name: 'Perfecto!',
     description: 'Get a 100% correct score in a study session.',
     icon: Trophy,
+    xp: 40,
     isUnlocked: (stats) => (stats.gamification?.perfectSessionsCount ?? 0) > 0,
   },
   {
@@ -112,6 +123,7 @@ export const achievementsList: Achievement[] = [
     name: 'Session Veteran',
     description: 'Complete 10 study sessions.',
     icon: Medal,
+    xp: 50,
     isUnlocked: (stats) => (stats.gamification?.sessionsCompleted ?? 0) >= 10,
   },
 ];

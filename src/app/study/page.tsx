@@ -300,9 +300,9 @@ export default function StudySessionPage() {
       let stats: GamificationStats;
 
       try {
-        stats = storedStatsString ? JSON.parse(storedStatsString) : { currentStreak: 0, longestStreak: 0, lastSessionDate: '', sessionsCompleted: 0, perfectSessionsCount: 0 };
+        stats = storedStatsString ? JSON.parse(storedStatsString) : { currentStreak: 0, longestStreak: 0, lastSessionDate: '', sessionsCompleted: 0, perfectSessionsCount: 0, totalXp: 0 };
       } catch (e) {
-        stats = { currentStreak: 0, longestStreak: 0, lastSessionDate: '', sessionsCompleted: 0, perfectSessionsCount: 0 };
+        stats = { currentStreak: 0, longestStreak: 0, lastSessionDate: '', sessionsCompleted: 0, perfectSessionsCount: 0, totalXp: 0 };
       }
 
       // Update streak
