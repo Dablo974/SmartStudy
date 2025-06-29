@@ -2,7 +2,7 @@
 'use client';
 
 import type { GamificationStats, McqSet } from './types';
-import { Flame, Star, BrainCircuit, Sparkles, FilePlus2 } from 'lucide-react';
+import { Flame, Star, BrainCircuit, Sparkles, FilePlus2, Award, Library, Target, TrendingUp } from 'lucide-react';
 import { masteryLevels } from './mastery';
 
 export interface Achievement {
@@ -24,6 +24,21 @@ export const achievementsList: Achievement[] = [
     isUnlocked: (stats) => !!stats.gamification?.lastSessionDate,
   },
   {
+    id: 'creator',
+    name: 'Creator',
+    description: 'Upload or create your first question set.',
+    icon: FilePlus2,
+    isUnlocked: (stats) => (stats.mcqSets?.length ?? 0) > 0,
+  },
+    {
+    id: 'ai-explorer',
+    name: 'AI Explorer',
+    description: 'Generate a question set using AI.',
+    icon: Sparkles,
+    isUnlocked: (stats) =>
+      !!stats.mcqs?.some(set => set.fileName.startsWith('AI-Generated -')),
+  },
+  {
     id: '7-day-streak',
     name: 'Consistent Learner',
     description: 'Maintain a 7-day study streak.',
@@ -41,18 +56,48 @@ export const achievementsList: Achievement[] = [
       ),
   },
   {
-    id: 'ai-explorer',
-    name: 'AI Explorer',
-    description: 'Generate a question set using AI.',
-    icon: Sparkles,
-    isUnlocked: (stats) =>
-      !!stats.mcqs?.some(set => set.fileName.startsWith('AI-Generated -')),
+    id: 'high-achiever',
+    name: 'High Achiever',
+    description: 'Answer 100 questions correctly in total.',
+    icon: Target,
+    isUnlocked: (stats) => {
+        const totalCorrect = stats.mcqSets?.reduce((acc, set) => {
+            if (!set.isActive) return acc;
+            return acc + set.mcqs.reduce((mcqAcc, mcq) => mcqAcc + (mcq.timesCorrect || 0), 0);
+        }, 0) ?? 0;
+        return totalCorrect >= 100;
+    }
   },
   {
-    id: 'creator',
-    name: 'Creator',
-    description: 'Upload or create your first question set.',
-    icon: FilePlus2,
-    isUnlocked: (stats) => (stats.mcqSets?.length ?? 0) > 0,
+    id: 'knowledge-hoarder',
+    name: 'Knowledge Hoarder',
+    description: 'Accumulate over 200 questions across all active sets.',
+    icon: Library,
+    isUnlocked: (stats) => {
+        const totalQuestions = stats.mcqSets?.reduce((acc, set) => {
+            if (!set.isActive) return acc;
+            return acc + set.mcqs.length;
+        }, 0) ?? 0;
+        return totalQuestions >= 200;
+    }
+  },
+  {
+    id: 'set-master',
+    name: 'Set Master',
+    description: 'Master an entire question set.',
+    icon: Award,
+    isUnlocked: (stats) =>
+      !!stats.mcqSets?.some(set =>
+        set.isActive &&
+        set.mcqs.length > 0 &&
+        set.mcqs.every(mcq => mcq.intervalIndex === MAX_INTERVAL_INDEX)
+      ),
+  },
+  {
+    id: 'marathon-runner',
+    name: 'Marathon Runner',
+    description: 'Maintain a 30-day study streak.',
+    icon: TrendingUp,
+    isUnlocked: (stats) => (stats.gamification?.currentStreak ?? 0) >= 30,
   },
 ];
