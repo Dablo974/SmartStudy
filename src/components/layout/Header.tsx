@@ -12,6 +12,7 @@ import {
 import { LogOut, User } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { StreakDisplay } from '@/components/gamification/StreakDisplay';
+import Link from 'next/link';
 
 interface HeaderProps {
   title: string;
@@ -37,9 +38,11 @@ export function Header({ title }: HeaderProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+            <DropdownMenuItem asChild>
+              <Link href="/profile">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem disabled>
               <LogOut className="mr-2 h-4 w-4" />
