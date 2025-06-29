@@ -19,7 +19,7 @@ export function SessionSummary({ initialQuestions, finalQuestions }: SessionSumm
   }
 
   return (
-    <Card className="w-full max-w-2xl mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-100">
+    <Card className="w-full max-w-4xl mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-100">
       <CardHeader>
         <CardTitle>Session Summary</CardTitle>
         <CardDescription>Here is your mastery progress for this session.</CardDescription>
@@ -35,8 +35,8 @@ export function SessionSummary({ initialQuestions, finalQuestions }: SessionSumm
                 const finalMastery = masteryLevels[finalQ.intervalIndex] ?? masteryLevels[0];
 
                 return (
-                <li key={initialQ.id} className="text-sm p-3 rounded-md bg-muted/50">
-                    <p className="font-medium truncate mb-2">{index + 1}. {initialQ.question}</p>
+                <li key={initialQ.id} className="text-sm p-3 rounded-md bg-muted/50 text-left">
+                    <p className="font-medium mb-2">{index + 1}. {initialQ.question}</p>
                     <div className="flex items-center justify-between gap-2">
                     <span className={cn("text-xs font-semibold px-2 py-1 rounded-md", initialMastery.className)}>
                         {initialMastery.level}

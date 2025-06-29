@@ -434,7 +434,7 @@ export default function StudySessionPage() {
     return (
       <AppLayout pageTitle={`Results for Session ${currentSessionNumber}`}>
         <div className="flex flex-col items-center text-center p-4">
-          <Card className="w-full max-w-2xl shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+          <Card className="w-full max-w-4xl shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
             <CardHeader>
               <CardTitle className="text-2xl">Session {currentSessionNumber} Complete!</CardTitle>
             </CardHeader>
