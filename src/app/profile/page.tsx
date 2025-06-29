@@ -19,28 +19,17 @@ import { calculateLevel } from '@/lib/experience';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { preselectedAvatars, defaultAvatar } from '@/lib/avatars';
 
 const LOCAL_STORAGE_GAMIFICATION_KEY = 'smartStudyProGamificationStats';
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 const LOCAL_STORAGE_AVATAR_KEY = 'smartStudyProUserAvatar';
 
-const preselectedAvatars = [
-  { hint: "user avatar", url: "https://placehold.co/100x100/ecf0f1/2c3e50.png" },
-  { hint: "student cartoon", url: "https://placehold.co/100x100/3498db/ffffff.png" },
-  { hint: "owl cartoon", url: "https://placehold.co/100x100/9b59b6/ffffff.png" },
-  { hint: "fox cartoon", url: "https://placehold.co/100x100/e67e22/ffffff.png" },
-  { hint: "robot face", url: "https://placehold.co/100x100/95a5a6/ffffff.png" },
-  { hint: "brain icon", url: "https://placehold.co/100x100/f1c40f/ffffff.png" },
-  { hint: "graduation cap", url: "https://placehold.co/100x100/2c3e50/ffffff.png" },
-  { hint: "rocket ship", url: "https://placehold.co/100x100/e74c3c/ffffff.png" },
-  { hint: "light bulb", url: "https://placehold.co/100x100/1abc9c/ffffff.png" },
-];
-
 export default function ProfilePage() {
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
   const [lockedAchievements, setLockedAchievements] = useState<Achievement[]>([]);
   const [levelInfo, setLevelInfo] = useState({ level: 1, currentXp: 0, xpInLevel: 0, xpForNextLevel: 100, progress: 0 });
-  const [avatarUrl, setAvatarUrl] = useState("https://placehold.co/100x100.png");
+  const [avatarUrl, setAvatarUrl] = useState(defaultAvatar.url);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -74,9 +63,7 @@ export default function ProfilePage() {
 
       // Load Avatar
       const storedAvatar = localStorage.getItem(LOCAL_STORAGE_AVATAR_KEY);
-      if (storedAvatar) {
-        setAvatarUrl(storedAvatar);
-      }
+      setAvatarUrl(storedAvatar || defaultAvatar.url);
 
     } catch (e) {
       console.error("Failed to load user profile data", e);
@@ -91,6 +78,8 @@ export default function ProfilePage() {
     setIsAvatarDialogOpen(false);
   };
 
+  const currentAvatarHint = preselectedAvatars.find(a => a.url === avatarUrl)?.hint || defaultAvatar.hint;
+
   return (
     <AppLayout pageTitle="My Profile">
       <div className="space-y-6">
@@ -98,7 +87,7 @@ export default function ProfilePage() {
           <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="relative group">
                 <Avatar className="h-20 w-20 border-2 border-primary">
-                <AvatarImage src={avatarUrl} alt="User Avatar" data-ai-hint="user avatar" />
+                <AvatarImage src={avatarUrl} alt="User Avatar" data-ai-hint={currentAvatarHint} />
                 <AvatarFallback>SS</AvatarFallback>
                 </Avatar>
                 <Button 

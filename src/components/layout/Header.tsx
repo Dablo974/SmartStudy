@@ -15,21 +15,21 @@ import { StreakDisplay } from '@/components/gamification/StreakDisplay';
 import { LevelDisplay } from '@/components/gamification/LevelDisplay';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { preselectedAvatars, defaultAvatar } from '@/lib/avatars';
 
 interface HeaderProps {
   title: string;
 }
 
 const LOCAL_STORAGE_AVATAR_KEY = 'smartStudyProUserAvatar';
-const DEFAULT_AVATAR_URL = 'https://placehold.co/100x100.png';
 
 export function Header({ title }: HeaderProps) {
-  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR_URL);
+  const [avatarUrl, setAvatarUrl] = useState(defaultAvatar.url);
 
   useEffect(() => {
     const handleAvatarChange = () => {
       const storedUrl = localStorage.getItem(LOCAL_STORAGE_AVATAR_KEY);
-      setAvatarUrl(storedUrl || DEFAULT_AVATAR_URL);
+      setAvatarUrl(storedUrl || defaultAvatar.url);
     };
 
     handleAvatarChange(); // Initial load
@@ -40,6 +40,8 @@ export function Header({ title }: HeaderProps) {
       window.removeEventListener('avatarChange', handleAvatarChange);
     };
   }, []);
+
+  const currentAvatarHint = preselectedAvatars.find(a => a.url === avatarUrl)?.hint || defaultAvatar.hint;
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 py-2 backdrop-blur md:px-6">
@@ -54,7 +56,7 @@ export function Header({ title }: HeaderProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="h-9 w-9 cursor-pointer">
-              <AvatarImage src={avatarUrl} alt="User Avatar" data-ai-hint="user avatar" />
+              <AvatarImage src={avatarUrl} alt="User Avatar" data-ai-hint={currentAvatarHint} />
               <AvatarFallback>SS</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
