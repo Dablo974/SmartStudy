@@ -19,7 +19,7 @@ export function SessionSummary({ initialQuestions, finalQuestions }: SessionSumm
   }
 
   return (
-    <Card className="w-full max-w-lg mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-100">
+    <Card className="w-full max-w-2xl mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-100">
       <CardHeader>
         <CardTitle>Session Summary</CardTitle>
         <CardDescription>Here is your mastery progress for this session.</CardDescription>
