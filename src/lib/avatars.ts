@@ -1,14 +1,16 @@
 
 export const preselectedAvatars = [
-  { hint: "user avatar", url: "https://placehold.co/100x100/ecf0f1/2c3e50.png" },
-  { hint: "student cartoon", url: "https://placehold.co/100x100/3498db/ffffff.png" },
-  { hint: "owl cartoon", url: "https://placehold.co/100x100/9b59b6/ffffff.png" },
-  { hint: "fox cartoon", url: "https://placehold.co/100x100/e67e22/ffffff.png" },
-  { hint: "robot face", url: "https://placehold.co/100x100/95a5a6/2c3e50.png" },
-  { hint: "brain icon", url: "https://placehold.co/100x100/f1c40f/2c3e50.png" },
-  { hint: "graduation cap", url: "https://placehold.co/100x100/2c3e50/ffffff.png" },
-  { hint: "rocket ship", url: "https://placehold.co/100x100/e74c3c/ffffff.png" },
-  { hint: "light bulb", url: "https://placehold.co/100x100/1abc9c/ffffff.png" },
+  { hint: "wizard owl", url: "https://i.imgur.com/bLXljhz.png" },
+  { hint: "cat glasses", url: "https://i.imgur.com/JGtxKoC.png" },
+  { hint: "dog glasses", url: "https://i.imgur.com/YCK4vy8.png" },
+  { hint: "fox book", url: "https://i.imgur.com/YGzkEA9.png" },
+  { hint: "student boy", url: "https://i.imgur.com/HQoJ4db.png" },
+  { hint: "student girl", url: "https://i.imgur.com/pT6SRTH.png" },
+  { hint: "einstein cat", url: "https://i.imgur.com/H5Sam1U.png" },
+  { hint: "teacher owl", url: "https://i.imgur.com/FTYZuT3.png" },
+  { hint: "thinking robot", url: "https://i.imgur.com/BWLfoct.png" },
+  { hint: "girl headphones", url: "https://i.imgur.com/aClS5OJ.png" },
+  { hint: "boy headphones", url: "https://i.imgur.com/gHi9Ian.png" },
 ];
 
 export const defaultAvatar = preselectedAvatars[0];
