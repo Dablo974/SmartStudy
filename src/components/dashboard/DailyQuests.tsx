@@ -9,6 +9,12 @@ import { useToast } from '@/hooks/use-toast';
 import { dailyQuestsList, type Quest } from '@/lib/quests';
 import type { DailyQuestStats, GamificationStats, QuestEvent } from '@/lib/types';
 import { Trophy, Check } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const LOCAL_STORAGE_QUEST_STATS_KEY = 'smartStudyProDailyQuestStats';
 const LOCAL_STORAGE_GAMIFICATION_KEY = 'smartStudyProGamificationStats';
@@ -103,41 +109,52 @@ export function DailyQuests() {
         <CardDescription>Complete daily tasks to earn XP and level up!</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {dailyQuestsList.map((quest) => {
-          const { current, goal } = quest.getProgress(events);
-          const progress = Math.min((current / goal) * 100, 100);
-          const isCompleted = current >= goal;
-          const isClaimed = questStats.claimedQuestIds.includes(quest.id);
+        <TooltipProvider>
+            {dailyQuestsList.map((quest) => {
+            const { current, goal } = quest.getProgress(events);
+            const progress = Math.min((current / goal) * 100, 100);
+            const isCompleted = current >= goal;
+            const isClaimed = questStats.claimedQuestIds.includes(quest.id);
 
-          return (
-            <div key={quest.id} className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                <quest.icon className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <div className="flex-1 space-y-1">
-                <div className="flex justify-between items-baseline">
-                    <p className="font-medium">{quest.name}</p>
-                    <p className="text-xs text-muted-foreground">+{quest.xp} XP</p>
+            return (
+                <div key={quest.id} className="flex items-center gap-4">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex flex-1 items-center gap-4 cursor-help">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                                    <quest.icon className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <div className="flex justify-between items-baseline">
+                                        <p className="font-medium">{quest.name}</p>
+                                        <p className="text-xs text-muted-foreground">+{quest.xp} XP</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Progress value={progress} className="h-2 flex-1" />
+                                        <span className="text-xs font-mono text-muted-foreground w-12 text-right">
+                                            {Math.min(current, goal)}/{goal}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{quest.description}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                    <Button
+                        size="sm"
+                        variant={isClaimed ? "outline" : "default"}
+                        disabled={!isCompleted || isClaimed}
+                        onClick={() => handleClaimReward(quest)}
+                        className="w-28"
+                    >
+                        {isClaimed ? <><Check className="mr-2 h-4 w-4" /> Claimed</> : 'Claim'}
+                    </Button>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Progress value={progress} className="h-2 flex-1" />
-                    <span className="text-xs font-mono text-muted-foreground w-12 text-right">
-                        {Math.min(current, goal)}/{goal}
-                    </span>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                variant={isClaimed ? "outline" : "default"}
-                disabled={!isCompleted || isClaimed}
-                onClick={() => handleClaimReward(quest)}
-                className="w-28"
-              >
-                {isClaimed ? <><Check className="mr-2 h-4 w-4" /> Claimed</> : 'Claim'}
-              </Button>
-            </div>
-          );
-        })}
+            );
+            })}
+        </TooltipProvider>
       </CardContent>
     </Card>
   );
