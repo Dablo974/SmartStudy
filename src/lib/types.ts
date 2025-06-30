@@ -50,3 +50,12 @@ export interface ExamAnswer {
   userAnswerIndex: number | null; // The index of the option the user selected. null if timed out.
   isCorrect: boolean;
 }
+
+export type QuestEvent =
+  | { type: 'CORRECT_ANSWER', subject?: string }
+  | { type: 'SESSION_COMPLETE' };
+
+export interface DailyQuestStats {
+  date: string; // YYYY-MM-DD
+  claimedQuestIds: string[];
+}

@@ -15,6 +15,7 @@ import { MasteryDistributionChart } from '@/components/dashboard/MasteryDistribu
 import { masteryLevels } from '@/lib/mastery';
 import { cn } from '@/lib/utils';
 import { MasteryLegend } from '@/components/dashboard/MasteryLegend';
+import { DailyQuests } from '@/components/dashboard/DailyQuests';
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 const LOCAL_STORAGE_SESSION_KEY = 'smartStudyProCurrentSession';
@@ -127,11 +128,16 @@ export default function DashboardPage() {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
           <PerformanceSummary progress={userProgress} />
         </div>
+        
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-100">
+          <DailyQuests />
+        </div>
+
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-100">
+          <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-200">
             <ProgressChart setMastery={userProgress.setMastery || {}} /> 
           </div>
-          <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-200">
+          <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-300">
             <CardHeader>
               <CardTitle>Start Studying</CardTitle>
             </CardHeader>
@@ -158,7 +164,7 @@ export default function DashboardPage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {allMcqSets.length > 0 && (
-            <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-300">
+            <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-400">
               <CardHeader>
                 <CardTitle>Set Mastery (Lowest First)</CardTitle>
                 <CardDescription>Click on a set to see question-level mastery.</CardDescription>
@@ -170,14 +176,14 @@ export default function DashboardPage() {
           )}
 
           <div className={cn(
-              "animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-400",
+              "animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-500",
               allMcqSets.length === 0 && "lg:col-span-2"
             )}>
             <MasteryDistributionChart data={masteryDistribution} />
           </div>
         </div>
 
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-500">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out delay-600">
           <MasteryLegend />
         </div>
       </div>

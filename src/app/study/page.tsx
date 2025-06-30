@@ -3,7 +3,7 @@
 
 import { AppLayout } from '@/components/layout/AppLayout';
 import { QuestionDisplay } from '@/components/study/QuestionDisplay';
-import type { MCQ, McqSet, GamificationStats } from '@/lib/types';
+import type { MCQ, McqSet, GamificationStats, QuestEvent } from '@/lib/types';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +42,19 @@ const TIMER_OPTIONS = [
   { value: '45', label: '45 Seconds' },
   { value: '60', label: '60 Seconds' },
 ];
+
+const logQuestEvent = (event: QuestEvent) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const key = `smartStudyProQuestEvents_${todayStr}`;
+    try {
+        const existingEventsString = localStorage.getItem(key);
+        const events: QuestEvent[] = existingEventsString ? JSON.parse(existingEventsString) : [];
+        events.push(event);
+        localStorage.setItem(key, JSON.stringify(events));
+    } catch (e) {
+        console.error("Failed to log quest event", e);
+    }
+};
 
 export default function StudySessionPage() {
   const [allMcqSets, setAllMcqSets] = useState<McqSet[] | null>(null);
@@ -246,6 +259,7 @@ export default function StudySessionPage() {
         variant: "default",
         className: "bg-green-500/10 border-green-500 text-green-700 dark:bg-green-500/20 dark:text-green-400",
       });
+      logQuestEvent({ type: 'CORRECT_ANSWER', subject: sessionQuestions[currentQuestionIndex].subject });
     } else {
        toast({
         title: "Incorrect",
@@ -292,6 +306,8 @@ export default function StudySessionPage() {
     if (showResults) {
       isTimerActiveRef.current = false;
       if (timerIdRef.current) clearInterval(timerIdRef.current);
+      
+      logQuestEvent({ type: 'SESSION_COMPLETE' });
 
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0];
@@ -324,6 +340,7 @@ export default function StudySessionPage() {
 
       localStorage.setItem(LOCAL_STORAGE_GAMIFICATION_KEY, JSON.stringify(stats));
       window.dispatchEvent(new CustomEvent('gamificationUpdate'));
+      window.dispatchEvent(new CustomEvent('questUpdate'));
     }
   }, [showResults, score, initialSessionQuestionCount]);
 
