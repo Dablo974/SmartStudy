@@ -10,8 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { UploadCloud } from 'lucide-react';
-import type { MCQ, McqSet } from '@/lib/types'; 
+import type { MCQ, McqSet, GamificationStats } from '@/lib/types'; 
 import { cn } from '@/lib/utils';
+import { checkAndNotifyAchievements } from '@/lib/achievements-helper';
 
 const formSchema = z.object({
   csvFile: typeof window === 'undefined' 
@@ -24,6 +25,7 @@ const formSchema = z.object({
 type McqUploadFormValues = z.infer<typeof formSchema>;
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
+const LOCAL_STORAGE_GAMIFICATION_KEY = 'smartStudyProGamificationStats';
 
 export function McqUploadForm() {
   const { toast } = useToast();
@@ -126,6 +128,10 @@ export function McqUploadForm() {
 
         const updatedMcqSets = [...existingMcqSets, newMcqSet];
         localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(updatedMcqSets));
+        
+        const gamificationString = localStorage.getItem(LOCAL_STORAGE_GAMIFICATION_KEY);
+        const gamification: GamificationStats | null = gamificationString ? JSON.parse(gamificationString) : null;
+        checkAndNotifyAchievements(toast, gamification, updatedMcqSets);
 
         toast({
           title: 'Upload Successful',

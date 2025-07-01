@@ -27,6 +27,7 @@ const LOCAL_STORAGE_GAMIFICATION_KEY = 'smartStudyProGamificationStats';
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
 const LOCAL_STORAGE_AVATAR_KEY = 'smartStudyProUserAvatar';
 const LOCAL_STORAGE_USERNAME_KEY = 'smartStudyProUsername';
+const NOTIFIED_ACHIEVEMENTS_KEY = 'smartStudyProNotifiedAchievementIds';
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -67,6 +68,13 @@ export default function ProfilePage() {
       setUnlockedAchievements(unlocked);
       setLockedAchievements(locked);
       setLevelInfo(calculateLevel(newTotalXp));
+      
+      // Prime the notified achievements list so users don't get spammed on first load
+      const previouslyNotifiedIdsStr = localStorage.getItem(NOTIFIED_ACHIEVEMENTS_KEY);
+      const previouslyNotifiedIds: string[] = previouslyNotifiedIdsStr ? JSON.parse(previouslyNotifiedIdsStr) : [];
+      const unlockedIds = unlocked.map(ach => ach.id);
+      const allKnownIds = [...new Set([...previouslyNotifiedIds, ...unlockedIds])];
+      localStorage.setItem(NOTIFIED_ACHIEVEMENTS_KEY, JSON.stringify(allKnownIds));
 
       // Load Avatar
       const storedAvatar = localStorage.getItem(LOCAL_STORAGE_AVATAR_KEY);

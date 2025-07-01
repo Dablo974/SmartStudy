@@ -12,13 +12,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import type { MCQ, McqSet } from '@/lib/types';
+import type { MCQ, McqSet, GamificationStats } from '@/lib/types';
 import type { GeneratedMcq } from '@/ai/flows/generate-mcqs-from-text-flow';
 import { generateMcqsFromText } from '@/ai/flows/generate-mcqs-from-text-flow';
 import { Loader2, Wand2, Save, Download, RotateCcw, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { checkAndNotifyAchievements } from '@/lib/achievements-helper';
 
 const formSchema = z.object({
   pdfFile: typeof window === 'undefined'
@@ -31,6 +32,7 @@ const formSchema = z.object({
 type PdfUploadFormValues = z.infer<typeof formSchema>;
 
 const LOCAL_STORAGE_MCQ_SETS_KEY = 'smartStudyProUserMcqSets';
+const LOCAL_STORAGE_GAMIFICATION_KEY = 'smartStudyProGamificationStats';
 
 export default function GenerateFromPdfPage() {
   const { toast } = useToast();
@@ -180,6 +182,10 @@ export default function GenerateFromPdfPage() {
     
     const updatedSets = [...existingSets, newMcqSet];
     localStorage.setItem(LOCAL_STORAGE_MCQ_SETS_KEY, JSON.stringify(updatedSets));
+    
+    const gamificationString = localStorage.getItem(LOCAL_STORAGE_GAMIFICATION_KEY);
+    const gamification: GamificationStats | null = gamificationString ? JSON.parse(gamificationString) : null;
+    checkAndNotifyAchievements(toast, gamification, updatedSets);
     
     toast({
       title: "Set Saved!",

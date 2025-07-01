@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { SessionSummary } from '@/components/study/SessionSummary';
+import { checkAndNotifyAchievements } from '@/lib/achievements-helper';
 
 const REVIEW_INTERVALS_SESSIONS = [1, 2, 4, 6, 8]; 
 
@@ -339,10 +340,12 @@ export default function StudySessionPage() {
       }
 
       localStorage.setItem(LOCAL_STORAGE_GAMIFICATION_KEY, JSON.stringify(stats));
+      checkAndNotifyAchievements(toast, stats, allMcqSets);
+
       window.dispatchEvent(new CustomEvent('gamificationUpdate'));
       window.dispatchEvent(new CustomEvent('questUpdate'));
     }
-  }, [showResults, score, initialSessionQuestionCount]);
+  }, [showResults, score, initialSessionQuestionCount, toast, allMcqSets]);
 
   const handleNextQuestion = () => {
     setIsAnswerSubmitted(false);
