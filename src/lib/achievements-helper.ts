@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { achievementsList } from '@/lib/achievements';
 import type { GamificationStats, McqSet } from '@/lib/types';
@@ -33,11 +34,11 @@ export function checkAndNotifyAchievements(
       // Stagger notifications slightly to prevent them from overlapping
       setTimeout(() => {
         toast({
-          title: (
-            <div className="flex items-center gap-2 font-semibold">
-              <Trophy className="h-5 w-5 text-yellow-400" />
-              <span>Achievement Unlocked!</span>
-            </div>
+          title: React.createElement(
+            'div',
+            { className: 'flex items-center gap-2 font-semibold' },
+            React.createElement(Trophy, { className: 'h-5 w-5 text-yellow-400' }),
+            React.createElement('span', null, 'Achievement Unlocked!')
           ),
           description: `${ach.name} (+${ach.xp} XP)`,
         });
